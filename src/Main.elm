@@ -36,6 +36,8 @@ type GameState
     | Deuce
     | Advantage Player
     | GameWon Player
+    | Tiebreak Int Int
+    | TiebreakWon Player TiebreakScore
 
 
 type alias SetScore =
@@ -44,9 +46,15 @@ type alias SetScore =
     }
 
 
+type alias TiebreakScore =
+    { playerOne : Int
+    , playerTwo : Int
+    }
+
+
 type SetResult
     = SetInProgress SetScore (Maybe GameState)
-    | SetFinished Player SetScore
+    | SetFinished Player SetScore (Maybe TiebreakScore)
 
 
 type Msg
@@ -116,10 +124,16 @@ updatePoint pointWinner =
                                     )
 
                                 Nothing ->
-                                    -- No active game → start a fresh one
+                                    -- No active game → start a fresh one (tiebreak at 6–6)
                                     let
+                                        start =
+                                            if setScore.playerOne == 6 && setScore.playerTwo == 6 then
+                                                Tiebreak 0 0
+                                            else
+                                                Ongoing Love Love
+
                                         newGame =
-                                            scorePoint pointWinner (Ongoing Love Love)
+                                            scorePoint pointWinner start
                                     in
                                     ( sets
                                     , Just (SetInProgress setScore (Just newGame))
@@ -145,13 +159,22 @@ updateSet =
                                     incrementSetScore winner score
                             in
                             if hasPlayerWonSet newScore then
-                                ( sets ++ [ SetFinished winner newScore ]
+                                ( sets ++ [ SetFinished winner newScore Nothing ]
                                 , Just (SetInProgress { playerOne = 0, playerTwo = 0 } Nothing)
                                 )
                             else
                                 ( sets
                                 , Just (SetInProgress newScore Nothing)
                                 )
+
+                        Just (SetInProgress score (Just (TiebreakWon winner tb))) ->
+                            let
+                                newScore =
+                                    incrementSetScore winner score
+                            in
+                            ( sets ++ [ SetFinished winner newScore (Just tb) ]
+                            , Just (SetInProgress { playerOne = 0, playerTwo = 0 } Nothing)
+                            )
 
                         _ ->
                             ( sets, currentSet )
@@ -212,6 +235,35 @@ scorePoint pointWinner gameState =
             else
                 Deuce
 
+        Tiebreak playerOnePoints playerTwoPoints ->
+            let
+                ( newPlayerOnePoint, newPlayer2Point ) =
+                    case pointWinner of
+                        PlayerOne -> ( playerOnePoints + 1, playerTwoPoints )
+                        PlayerTwo -> ( playerOnePoints, playerTwoPoints + 1 )
+
+                pointDifference =
+                    abs (newPlayerOnePoint - newPlayer2Point)
+
+                highestScore =
+                    max newPlayerOnePoint newPlayer2Point
+            in
+            if highestScore >= 7 && pointDifference >= 2 then
+                case compare newPlayerOnePoint newPlayer2Point of
+                    GT ->
+                        TiebreakWon PlayerOne { playerOne = newPlayerOnePoint, playerTwo = newPlayer2Point }
+
+                    LT ->
+                        TiebreakWon PlayerTwo { playerOne = newPlayerOnePoint, playerTwo = newPlayer2Point }
+
+                    EQ ->
+                        Tiebreak newPlayerOnePoint newPlayer2Point
+            else
+                Tiebreak newPlayerOnePoint newPlayer2Point
+
+        TiebreakWon _ _ ->
+            gameState
+
         GameWon _ ->
             gameState
 
@@ -256,7 +308,7 @@ countSetWins player sets =
         List.filter
             (\s ->
                 case s of
-                    SetFinished winner _ ->
+                    SetFinished winner _ _ ->
                         winner == player
 
                     _ ->
@@ -318,7 +370,7 @@ view model =
                         SetInProgress score maybeGame ->
                             ( score, Maybe.withDefault (Ongoing Love Love) maybeGame )
 
-                        SetFinished winner score ->
+                        SetFinished winner score _ ->
                             ( score, GameWon winner )
 
                 completedSetsText =
@@ -330,7 +382,7 @@ view model =
                             let
                                 toScore setResult =
                                     case setResult of
-                                        SetFinished _ score ->
+                                        SetFinished _ score _ ->
                                             String.fromInt score.playerOne ++ " - " ++ String.fromInt score.playerTwo
 
                                         _ ->
@@ -348,6 +400,21 @@ view model =
 
                         Advantage player ->
                             "Game: Advantage " ++ playerToString player
+
+                        Tiebreak p1 p2 ->
+                            "Game: Tiebreak "
+                                ++ String.fromInt p1
+                                ++ " - "
+                                ++ String.fromInt p2
+
+                        TiebreakWon player tb ->
+                            "Tiebreak won by "
+                                ++ playerToString player
+                                ++ " ("
+                                ++ String.fromInt tb.playerOne
+                                ++ "-"
+                                ++ String.fromInt tb.playerTwo
+                                ++ ")"
 
                         GameWon player ->
                             "Game won by " ++ playerToString player
@@ -375,11 +442,21 @@ view model =
                                 (List.map
                                     (\set ->
                                         case set of
-                                            SetFinished _ score ->
-                                                String.fromInt score.playerOne
-                                                    ++ " - "
-                                                    ++ String.fromInt score.playerTwo
-
+                                            SetFinished _ score maybeTb ->
+                                                case maybeTb of
+                                                    Just tb ->
+                                                        String.fromInt score.playerOne
+                                                            ++ " - "
+                                                            ++ String.fromInt score.playerTwo
+                                                            ++ " (" 
+                                                            ++ String.fromInt tb.playerOne
+                                                            ++ "-"
+                                                            ++ String.fromInt tb.playerTwo
+                                                            ++ ")"
+                                                    Nothing ->
+                                                        String.fromInt score.playerOne
+                                                            ++ " - "
+                                                            ++ String.fromInt score.playerTwo
                                             _ ->
                                                 ""
                                     )
