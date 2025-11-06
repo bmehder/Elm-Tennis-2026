@@ -41,8 +41,8 @@ type GameState
 
 
 type alias SetScore =
-    { playerOne : Int
-    , playerTwo : Int
+    { playerOnePoint : Int
+    , playerTwoPoint : Int
     }
 
 
@@ -80,7 +80,7 @@ initialModel =
     { match =
         MatchInProgress
             { sets = []
-            , currentSet = Just (SetInProgress { playerOne = 0, playerTwo = 0 } (Just (Ongoing Love Love)))
+            , currentSet = Just (SetInProgress { playerOnePoint = 0, playerTwoPoint = 0 } (Just (Ongoing Love Love)))
             }
     , config = { setsToWin = 2 }
     }
@@ -127,7 +127,7 @@ updatePoint pointWinner =
                                     -- No active game → start a fresh one (tiebreak at 6–6)
                                     let
                                         start =
-                                            if setScore.playerOne == 6 && setScore.playerTwo == 6 then
+                                            if setScore.playerOnePoint == 6 && setScore.playerTwoPoint == 6 then
                                                 Tiebreak 0 0
                                             else
                                                 Ongoing Love Love
@@ -160,7 +160,7 @@ updateSet =
                             in
                             if hasPlayerWonSet newScore then
                                 ( sets ++ [ SetFinished winner newScore Nothing ]
-                                , Just (SetInProgress { playerOne = 0, playerTwo = 0 } Nothing)
+                                , Just (SetInProgress { playerOnePoint = 0, playerTwoPoint = 0 } Nothing)
                                 )
                             else
                                 ( sets
@@ -173,7 +173,7 @@ updateSet =
                                     incrementSetScore winner score
                             in
                             ( sets ++ [ SetFinished winner newScore (Just tb) ]
-                            , Just (SetInProgress { playerOne = 0, playerTwo = 0 } Nothing)
+                            , Just (SetInProgress { playerOnePoint = 0, playerTwoPoint = 0 } Nothing)
                             )
 
                         _ ->
@@ -184,7 +184,6 @@ updateSet =
                     result
             in
             MatchInProgress { sets = newSets, currentSet = newCurrentSet }
-
 
 
 updateMatch : Int -> Match -> Match
@@ -288,17 +287,17 @@ incrementSetScore : Player -> SetScore -> SetScore
 incrementSetScore player setScore =
     case player of
         PlayerOne ->
-            { setScore | playerOne = setScore.playerOne + 1 }
+            { setScore | playerOnePoint = setScore.playerOnePoint + 1 }
 
         PlayerTwo ->
-            { setScore | playerTwo = setScore.playerTwo + 1 }
+            { setScore | playerTwoPoint = setScore.playerTwoPoint + 1 }
 
 
 hasPlayerWonSet : SetScore -> Bool
-hasPlayerWonSet { playerOne, playerTwo } =
+hasPlayerWonSet { playerOnePoint, playerTwoPoint } =
     let
-        diff = abs (playerOne - playerTwo)
-        maxScore = max playerOne playerTwo
+        diff = abs (playerOnePoint - playerTwoPoint)
+        maxScore = max playerOnePoint playerTwoPoint
     in
     maxScore >= 6 && diff >= 2
 
@@ -363,7 +362,7 @@ view model =
         MatchInProgress matchData ->
             let
                 currentSetValue =
-                    Maybe.withDefault (SetInProgress { playerOne = 0, playerTwo = 0 } (Just (Ongoing Love Love))) matchData.currentSet
+                    Maybe.withDefault (SetInProgress { playerOnePoint = 0, playerTwoPoint = 0 } (Just (Ongoing Love Love))) matchData.currentSet
 
                 ( setScore, gameState ) =
                     case currentSetValue of
@@ -383,7 +382,7 @@ view model =
                                 toScore setResult =
                                     case setResult of
                                         SetFinished _ score _ ->
-                                            String.fromInt score.playerOne ++ " - " ++ String.fromInt score.playerTwo
+                                            String.fromInt score.playerOnePoint ++ " - " ++ String.fromInt score.playerTwoPoint
 
                                         _ ->
                                             ""
@@ -420,7 +419,7 @@ view model =
                             "Game won by " ++ playerToString player
 
                 setText =
-                    "Set: " ++ String.fromInt setScore.playerOne ++ " - " ++ String.fromInt setScore.playerTwo
+                    "Set: " ++ String.fromInt setScore.playerOnePoint ++ " - " ++ String.fromInt setScore.playerTwoPoint
             in
             Html.div []
                 [ Html.h1 [] [ text "Tennis Match" ]
@@ -445,18 +444,18 @@ view model =
                                             SetFinished _ score maybeTb ->
                                                 case maybeTb of
                                                     Just tb ->
-                                                        String.fromInt score.playerOne
+                                                        String.fromInt score.playerOnePoint
                                                             ++ " - "
-                                                            ++ String.fromInt score.playerTwo
+                                                            ++ String.fromInt score.playerTwoPoint
                                                             ++ " (" 
                                                             ++ String.fromInt tb.playerOne
                                                             ++ "-"
                                                             ++ String.fromInt tb.playerTwo
                                                             ++ ")"
                                                     Nothing ->
-                                                        String.fromInt score.playerOne
+                                                        String.fromInt score.playerOnePoint
                                                             ++ " - "
-                                                            ++ String.fromInt score.playerTwo
+                                                            ++ String.fromInt score.playerTwoPoint
                                             _ ->
                                                 ""
                                     )
