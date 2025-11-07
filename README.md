@@ -45,10 +45,11 @@ elm reactor
 
 Then open `http://localhost:8000/` and click `src/Main.elm`.
 
-### Option 2: Compile to HTML
+### Option 2: Compile to JS
 
 ```bash
-elm make src/Main.elm --output=index.html
+elm make src/Main.elm --output=elm.js
+open index.html   # or serve it statically / deploy
 ```
 Then open `index.html` in your browser.
 
