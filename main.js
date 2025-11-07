@@ -5542,87 +5542,24 @@ var $author$project$Main$updateSet = $author$project$Main$applyIfMatchInProgress
 			{currentSet: newCurrentSet, sets: newSets});
 	});
 var $author$project$Main$update = F2(
-	function (_v0, model) {
-		var player = _v0.a;
-		var newMatch = A2(
-			$author$project$Main$updateMatch,
-			model.config.setsToWin,
-			$author$project$Main$updateSet(
-				A2($author$project$Main$updatePoint, player, model.match)));
-		return _Utils_update(
-			model,
-			{match: newMatch});
+	function (msg, model) {
+		if (msg.$ === 'PlayerScores') {
+			var player = msg.a;
+			var newMatch = A2(
+				$author$project$Main$updateMatch,
+				model.config.setsToWin,
+				$author$project$Main$updateSet(
+					A2($author$project$Main$updatePoint, player, model.match)));
+			return _Utils_update(
+				model,
+				{match: newMatch});
+		} else {
+			return _Utils_update(
+				model,
+				{match: $author$project$Main$initialModel.match});
+		}
 	});
-var $elm$html$Html$div = _VirtualDom_node('div');
-var $elm$html$Html$h1 = _VirtualDom_node('h1');
-var $elm$html$Html$p = _VirtualDom_node('p');
-var $author$project$Main$playerToString = function (player) {
-	if (player.$ === 'PlayerOne') {
-		return 'Player 1';
-	} else {
-		return 'Player 2';
-	}
-};
-var $elm$virtual_dom$VirtualDom$text = _VirtualDom_text;
-var $elm$html$Html$text = $elm$virtual_dom$VirtualDom$text;
-var $author$project$Main$viewMatchFinished = F2(
-	function (winner, sets) {
-		return A2(
-			$elm$html$Html$div,
-			_List_Nil,
-			_List_fromArray(
-				[
-					A2(
-					$elm$html$Html$h1,
-					_List_Nil,
-					_List_fromArray(
-						[
-							$elm$html$Html$text('Tennis Match')
-						])),
-					A2(
-					$elm$html$Html$p,
-					_List_Nil,
-					_List_fromArray(
-						[
-							$elm$html$Html$text(
-							'Winner: ' + $author$project$Main$playerToString(winner))
-						])),
-					A2(
-					$elm$html$Html$p,
-					_List_Nil,
-					_List_fromArray(
-						[
-							$elm$html$Html$text(
-							'Final Sets: ' + A2(
-								$elm$core$String$join,
-								', ',
-								A2(
-									$elm$core$List$map,
-									function (set) {
-										if (set.$ === 'SetFinished') {
-											var score = set.b;
-											var maybeTb = set.c;
-											if (maybeTb.$ === 'Just') {
-												var tb = maybeTb.a;
-												var tb2 = $elm$core$String$fromInt(tb.playerTwo);
-												var tb1 = $elm$core$String$fromInt(tb.playerOne);
-												var p2 = $elm$core$String$fromInt(score.playerTwoPoint);
-												var p1 = $elm$core$String$fromInt(score.playerOnePoint);
-												return (_Utils_cmp(score.playerOnePoint, score.playerTwoPoint) > 0) ? (p1 + (' - ' + (p2 + (' (' + (tb2 + ')'))))) : (p1 + (' - ' + (p2 + (' (' + (tb1 + ')')))));
-											} else {
-												return $elm$core$String$fromInt(score.playerOnePoint) + (' - ' + $elm$core$String$fromInt(score.playerTwoPoint));
-											}
-										} else {
-											return '';
-										}
-									},
-									sets)))
-						]))
-				]));
-	});
-var $author$project$Main$PlayerScores = function (a) {
-	return {$: 'PlayerScores', a: a};
-};
+var $author$project$Main$NewMatch = {$: 'NewMatch'};
 var $elm$html$Html$button = _VirtualDom_node('button');
 var $elm$json$Json$Encode$string = _Json_wrap;
 var $elm$html$Html$Attributes$stringProperty = F2(
@@ -5633,6 +5570,8 @@ var $elm$html$Html$Attributes$stringProperty = F2(
 			$elm$json$Json$Encode$string(string));
 	});
 var $elm$html$Html$Attributes$class = $elm$html$Html$Attributes$stringProperty('className');
+var $elm$html$Html$div = _VirtualDom_node('div');
+var $elm$html$Html$h1 = _VirtualDom_node('h1');
 var $elm$virtual_dom$VirtualDom$Normal = function (a) {
 	return {$: 'Normal', a: a};
 };
@@ -5649,6 +5588,19 @@ var $elm$html$Html$Events$onClick = function (msg) {
 		$elm$html$Html$Events$on,
 		'click',
 		$elm$json$Json$Decode$succeed(msg));
+};
+var $elm$html$Html$p = _VirtualDom_node('p');
+var $author$project$Main$playerToString = function (player) {
+	if (player.$ === 'PlayerOne') {
+		return 'Player 1';
+	} else {
+		return 'Player 2';
+	}
+};
+var $elm$virtual_dom$VirtualDom$text = _VirtualDom_text;
+var $elm$html$Html$text = $elm$virtual_dom$VirtualDom$text;
+var $author$project$Main$PlayerScores = function (a) {
+	return {$: 'PlayerScores', a: a};
 };
 var $author$project$Main$pointToString = function (point) {
 	switch (point.$) {
@@ -5746,6 +5698,7 @@ var $elm$core$List$head = function (list) {
 		return $elm$core$Maybe$Nothing;
 	}
 };
+var $elm$html$Html$strong = _VirtualDom_node('strong');
 var $author$project$Main$getSetDisplay = F3(
 	function (player, index, matchData) {
 		var _v0 = $elm$core$List$head(
@@ -5759,42 +5712,77 @@ var $author$project$Main$getSetDisplay = F3(
 					index,
 					$elm$core$List$length(matchData.sets))) {
 					if (player.$ === 'PlayerOne') {
-						return $elm$core$String$fromInt(score.playerOnePoint);
+						return $elm$html$Html$text(
+							$elm$core$String$fromInt(score.playerOnePoint));
 					} else {
-						return $elm$core$String$fromInt(score.playerTwoPoint);
+						return $elm$html$Html$text(
+							$elm$core$String$fromInt(score.playerTwoPoint));
 					}
 				} else {
-					return '0';
+					return $elm$html$Html$text('0');
 				}
 			} else {
-				return '0';
+				return $elm$html$Html$text('0');
 			}
 		} else {
 			if (_v0.a.$ === 'SetFinished') {
 				var _v1 = _v0.a;
+				var winner = _v1.a;
 				var score = _v1.b;
 				var maybeTb = _v1.c;
 				if (maybeTb.$ === 'Just') {
 					var tb = maybeTb.a;
 					if (player.$ === 'PlayerOne') {
-						return (_Utils_cmp(score.playerOnePoint, score.playerTwoPoint) > 0) ? '7' : ($elm$core$String$fromInt(score.playerOnePoint) + (' (' + ($elm$core$String$fromInt(tb.playerOne) + ')')));
+						return (_Utils_cmp(score.playerOnePoint, score.playerTwoPoint) > 0) ? A2(
+							$elm$html$Html$strong,
+							_List_Nil,
+							_List_fromArray(
+								[
+									$elm$html$Html$text('7')
+								])) : $elm$html$Html$text(
+							$elm$core$String$fromInt(score.playerOnePoint) + (' (' + ($elm$core$String$fromInt(tb.playerOne) + ')')));
 					} else {
-						return (_Utils_cmp(score.playerTwoPoint, score.playerOnePoint) > 0) ? '7' : ($elm$core$String$fromInt(score.playerTwoPoint) + (' (' + ($elm$core$String$fromInt(tb.playerTwo) + ')')));
+						return (_Utils_cmp(score.playerTwoPoint, score.playerOnePoint) > 0) ? A2(
+							$elm$html$Html$strong,
+							_List_Nil,
+							_List_fromArray(
+								[
+									$elm$html$Html$text('7')
+								])) : $elm$html$Html$text(
+							$elm$core$String$fromInt(score.playerTwoPoint) + (' (' + ($elm$core$String$fromInt(tb.playerTwo) + ')')));
 					}
 				} else {
 					if (player.$ === 'PlayerOne') {
-						return $elm$core$String$fromInt(score.playerOnePoint);
+						return (_Utils_cmp(score.playerOnePoint, score.playerTwoPoint) > 0) ? A2(
+							$elm$html$Html$strong,
+							_List_Nil,
+							_List_fromArray(
+								[
+									$elm$html$Html$text(
+									$elm$core$String$fromInt(score.playerOnePoint))
+								])) : $elm$html$Html$text(
+							$elm$core$String$fromInt(score.playerOnePoint));
 					} else {
-						return $elm$core$String$fromInt(score.playerTwoPoint);
+						return (_Utils_cmp(score.playerTwoPoint, score.playerOnePoint) > 0) ? A2(
+							$elm$html$Html$strong,
+							_List_Nil,
+							_List_fromArray(
+								[
+									$elm$html$Html$text(
+									$elm$core$String$fromInt(score.playerTwoPoint))
+								])) : $elm$html$Html$text(
+							$elm$core$String$fromInt(score.playerTwoPoint));
 					}
 				}
 			} else {
 				var _v8 = _v0.a;
 				var score = _v8.a;
 				if (player.$ === 'PlayerOne') {
-					return $elm$core$String$fromInt(score.playerOnePoint);
+					return $elm$html$Html$text(
+						$elm$core$String$fromInt(score.playerOnePoint));
 				} else {
-					return $elm$core$String$fromInt(score.playerTwoPoint);
+					return $elm$html$Html$text(
+						$elm$core$String$fromInt(score.playerTwoPoint));
 				}
 			}
 		}
@@ -5873,24 +5861,21 @@ var $author$project$Main$viewScoreboard = function (matchData) {
 				_List_Nil,
 				_List_fromArray(
 					[
-						$elm$html$Html$text(
-						A3($author$project$Main$getSetDisplay, $author$project$Main$PlayerOne, 0, matchData))
+						A3($author$project$Main$getSetDisplay, $author$project$Main$PlayerOne, 0, matchData)
 					])),
 				A2(
 				$elm$html$Html$div,
 				_List_Nil,
 				_List_fromArray(
 					[
-						$elm$html$Html$text(
-						A3($author$project$Main$getSetDisplay, $author$project$Main$PlayerOne, 1, matchData))
+						A3($author$project$Main$getSetDisplay, $author$project$Main$PlayerOne, 1, matchData)
 					])),
 				A2(
 				$elm$html$Html$div,
 				_List_Nil,
 				_List_fromArray(
 					[
-						$elm$html$Html$text(
-						A3($author$project$Main$getSetDisplay, $author$project$Main$PlayerOne, 2, matchData))
+						A3($author$project$Main$getSetDisplay, $author$project$Main$PlayerOne, 2, matchData)
 					])),
 				A2(
 				$elm$html$Html$div,
@@ -5915,24 +5900,21 @@ var $author$project$Main$viewScoreboard = function (matchData) {
 				_List_Nil,
 				_List_fromArray(
 					[
-						$elm$html$Html$text(
-						A3($author$project$Main$getSetDisplay, $author$project$Main$PlayerTwo, 0, matchData))
+						A3($author$project$Main$getSetDisplay, $author$project$Main$PlayerTwo, 0, matchData)
 					])),
 				A2(
 				$elm$html$Html$div,
 				_List_Nil,
 				_List_fromArray(
 					[
-						$elm$html$Html$text(
-						A3($author$project$Main$getSetDisplay, $author$project$Main$PlayerTwo, 1, matchData))
+						A3($author$project$Main$getSetDisplay, $author$project$Main$PlayerTwo, 1, matchData)
 					])),
 				A2(
 				$elm$html$Html$div,
 				_List_Nil,
 				_List_fromArray(
 					[
-						$elm$html$Html$text(
-						A3($author$project$Main$getSetDisplay, $author$project$Main$PlayerTwo, 2, matchData))
+						A3($author$project$Main$getSetDisplay, $author$project$Main$PlayerTwo, 2, matchData)
 					])),
 				A2(
 				$elm$html$Html$div,
@@ -5950,6 +5932,16 @@ var $author$project$Main$viewMatchInProgress = function (matchData) {
 		_List_Nil,
 		_List_fromArray(
 			[
+				A2(
+				$elm$html$Html$h1,
+				_List_fromArray(
+					[
+						$elm$html$Html$Attributes$class('grid justify-content-center')
+					]),
+				_List_fromArray(
+					[
+						$elm$html$Html$text('🎾 Elm Tennis 2026')
+					])),
 				$author$project$Main$viewScoreboard(matchData),
 				A2(
 				$elm$html$Html$div,
@@ -5992,7 +5984,51 @@ var $author$project$Main$view = function (model) {
 	} else {
 		var winner = _v0.a;
 		var sets = _v0.b;
-		return A2($author$project$Main$viewMatchFinished, winner, sets);
+		return A2(
+			$elm$html$Html$div,
+			_List_Nil,
+			_List_fromArray(
+				[
+					A2(
+					$elm$html$Html$h1,
+					_List_fromArray(
+						[
+							$elm$html$Html$Attributes$class('grid justify-content-center')
+						]),
+					_List_fromArray(
+						[
+							$elm$html$Html$text('🎾 Elm Tennis 2026')
+						])),
+					$author$project$Main$viewScoreboard(
+					{currentSet: $elm$core$Maybe$Nothing, sets: sets}),
+					A2(
+					$elm$html$Html$div,
+					_List_fromArray(
+						[
+							$elm$html$Html$Attributes$class('grid justify-content-center align-items-center')
+						]),
+					_List_fromArray(
+						[
+							A2(
+							$elm$html$Html$p,
+							_List_Nil,
+							_List_fromArray(
+								[
+									$elm$html$Html$text(
+									'Winner: ' + $author$project$Main$playerToString(winner))
+								])),
+							A2(
+							$elm$html$Html$button,
+							_List_fromArray(
+								[
+									$elm$html$Html$Events$onClick($author$project$Main$NewMatch)
+								]),
+							_List_fromArray(
+								[
+									$elm$html$Html$text('New Match')
+								]))
+						]))
+				]));
 	}
 };
 var $author$project$Main$main = $elm$browser$Browser$sandbox(
