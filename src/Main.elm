@@ -1,23 +1,9 @@
 module Main exposing (Model, Msg, main)
 
 import Browser
-import Html exposing (Html, text)
-import Html.Attributes
-import Html.Events
-
-
-type alias MatchConfig =
-    { setsToWin : Int
-    }
-
-
-main : Program () Model Msg
-main =
-    Browser.sandbox
-        { init = initialModel
-        , update = update
-        , view = view
-        }
+import Html exposing (Html, button, div, h1, p, strong, text)
+import Html.Attributes exposing (class)
+import Html.Events exposing (onClick)
 
 
 type Player
@@ -48,19 +34,14 @@ type alias SetScore =
 
 
 type alias TiebreakScore =
-    { playerOne : Int
-    , playerTwo : Int
+    { playerOnePoint : Int
+    , playerTwoPoint : Int
     }
 
 
 type SetResult
     = SetInProgress SetScore (Maybe GameState)
     | SetFinished Player SetScore (Maybe TiebreakScore)
-
-
-type Msg
-    = PlayerScores Player
-    | NewMatch
 
 
 type Match
@@ -71,10 +52,25 @@ type Match
     | MatchFinished Player (List SetResult)
 
 
+type SetsToWin
+    = BestOfThree
+    | BestOfFive
+
+
+type alias MatchConfig =
+    { setsToWin : SetsToWin
+    }
+
+
 type alias Model =
     { match : Match
     , config : MatchConfig
     }
+
+
+type Msg
+    = PlayerScores Player
+    | NewMatch
 
 
 initialModel : Model
@@ -84,8 +80,17 @@ initialModel =
             { sets = []
             , currentSet = Just (SetInProgress { playerOnePoint = 0, playerTwoPoint = 0 } (Just (Ongoing Love Love)))
             }
-    , config = { setsToWin = 2 }
+    , config = { setsToWin = BestOfThree }
     }
+
+
+main : Program () Model Msg
+main =
+    Browser.sandbox
+        { init = initialModel
+        , update = update
+        , view = view
+        }
 
 
 update : Msg -> Model -> Model
@@ -195,11 +200,11 @@ updateSet =
             MatchInProgress { sets = newSets, currentSet = newCurrentSet }
 
 
-updateMatch : Int -> Match -> Match
+updateMatch : SetsToWin -> Match -> Match
 updateMatch setsToWin =
     applyIfMatchInProgress <|
         \details ->
-            case matchWinner setsToWin details.sets of
+            case matchWinner (setsToWinToInt setsToWin) details.sets of
                 Just winner ->
                     MatchFinished winner details.sets
 
@@ -262,10 +267,10 @@ scorePoint pointWinner gameState =
             if highestScore >= 7 && pointDifference >= 2 then
                 case compare newPlayerOnePoint newPlayer2Point of
                     GT ->
-                        TiebreakWon PlayerOne { playerOne = newPlayerOnePoint, playerTwo = newPlayer2Point }
+                        TiebreakWon PlayerOne { playerOnePoint = newPlayerOnePoint, playerTwoPoint = newPlayer2Point }
 
                     LT ->
-                        TiebreakWon PlayerTwo { playerOne = newPlayerOnePoint, playerTwo = newPlayer2Point }
+                        TiebreakWon PlayerTwo { playerOnePoint = newPlayerOnePoint, playerTwoPoint = newPlayer2Point }
 
                     EQ ->
                         Tiebreak newPlayerOnePoint newPlayer2Point
@@ -304,6 +309,16 @@ incrementSetScore player setScore =
 
         PlayerTwo ->
             { setScore | playerTwoPoint = setScore.playerTwoPoint + 1 }
+
+
+setsToWinToInt : SetsToWin -> Int
+setsToWinToInt stw =
+    case stw of
+        BestOfThree ->
+            2
+
+        BestOfFive ->
+            3
 
 
 hasPlayerWonSet : SetScore -> Bool
@@ -352,6 +367,201 @@ matchWinner setsToWin sets =
         Nothing
 
 
+
+-- VIEW (drop-in replacement)
+
+
+view : Model -> Html Msg
+view model =
+    case model.match of
+        MatchInProgress matchData ->
+            viewMatchInProgress matchData
+
+        MatchFinished winner sets ->
+            viewMatchFinished winner sets
+
+
+viewMatchLayout : { sets : List SetResult, currentSet : Maybe SetResult } -> Html Msg -> Html Msg
+viewMatchLayout scoreboardData innerContent =
+    -- keep this super simple to avoid list-append pitfalls
+    div []
+        [ h1 [ class "grid justify-content-center" ] [ text "🎾 Elm Tennis 2026" ]
+        , viewScoreboard scoreboardData
+        , innerContent
+        ]
+
+
+viewMatchInProgress : { sets : List SetResult, currentSet : Maybe SetResult } -> Html Msg
+viewMatchInProgress matchData =
+    viewMatchLayout matchData <|
+        div [ class "flex justify-content-center gap-0-5" ]
+            [ button [ onClick (PlayerScores PlayerOne) ] [ text "Player 1 Scores" ]
+            , button [ onClick (PlayerScores PlayerTwo) ] [ text "Player 2 Scores" ]
+            ]
+
+
+viewMatchFinished : Player -> List SetResult -> Html Msg
+viewMatchFinished winner sets =
+    viewMatchLayout { sets = sets, currentSet = Nothing } <|
+        div [ class "grid justify-content-center align-items-center" ]
+            [ p [] [ text ("Winner: " ++ playerToString winner) ]
+            , button [ onClick NewMatch ] [ text "New Match" ]
+            ]
+
+
+viewScoreboard : { sets : List SetResult, currentSet : Maybe SetResult } -> Html Msg
+viewScoreboard matchData =
+    let
+        players : List Player
+        players =
+            [ PlayerOne, PlayerTwo ]
+
+        -- We stick with 3 set columns to match Best-of-3;
+        -- easy to tweak later if you want dynamic columns.
+        setHeaders : List (Html Msg)
+        setHeaders =
+            List.map
+                (\i -> div [ class "heading" ] [ text ("Set " ++ String.fromInt (i + 1)) ])
+                [ 0, 1, 2 ]
+
+        headersRow : List (Html Msg)
+        headersRow =
+            -- Use List.concat to avoid singleton-list ++ warnings
+            List.concat
+                [ [ div [ class "heading" ] [ text "Player" ] ]
+                , setHeaders
+                , [ div [ class "heading" ] [ text "Points" ] ]
+                ]
+
+        playerRow : Player -> List (Html Msg)
+        playerRow player =
+            [ div [ class "player" ] [ text (playerToString player) ]
+            , div [] [ getSetDisplay player 0 matchData ]
+            , div [] [ getSetDisplay player 1 matchData ]
+            , div [] [ getSetDisplay player 2 matchData ]
+            , div [] [ text (getCurrentGamePoints player matchData) ]
+            ]
+    in
+    div [ class "scoreboard" ]
+        (headersRow
+            ++ List.concatMap playerRow players
+        )
+
+
+getCurrentGamePoints : Player -> { sets : List SetResult, currentSet : Maybe SetResult } -> String
+getCurrentGamePoints player matchData =
+    case matchData.currentSet of
+        Just (SetInProgress _ (Just (Ongoing p1 p2))) ->
+            case player of
+                PlayerOne ->
+                    pointToString p1
+
+                PlayerTwo ->
+                    pointToString p2
+
+        Just (SetInProgress _ (Just (Tiebreak p1 p2))) ->
+            case player of
+                PlayerOne ->
+                    String.fromInt p1
+
+                PlayerTwo ->
+                    String.fromInt p2
+
+        Just (SetInProgress _ (Just Deuce)) ->
+            "40"
+
+        Just (SetInProgress _ (Just (Advantage p))) ->
+            case player of
+                PlayerOne ->
+                    if p == PlayerOne then
+                        "Ad"
+
+                    else
+                        "40"
+
+                PlayerTwo ->
+                    if p == PlayerTwo then
+                        "Ad"
+
+                    else
+                        "40"
+
+        Just (SetInProgress _ Nothing) ->
+            "0"
+
+        _ ->
+            "-"
+
+
+getSetDisplay : Player -> Int -> { sets : List SetResult, currentSet : Maybe SetResult } -> Html Msg
+getSetDisplay player index matchData =
+    case List.drop index matchData.sets |> List.head of
+        -- ✅ Completed set
+        Just (SetFinished winner score maybeTb) ->
+            case maybeTb of
+                -- ✅ Set had a tiebreak
+                Just tb ->
+                    case player of
+                        PlayerOne ->
+                            if score.playerOnePoint > score.playerTwoPoint then
+                                strong [] [ text "7" ]
+
+                            else
+                                text (String.fromInt score.playerOnePoint ++ " (" ++ String.fromInt tb.playerOnePoint ++ ")")
+
+                        PlayerTwo ->
+                            if score.playerTwoPoint > score.playerOnePoint then
+                                strong [] [ text "7" ]
+
+                            else
+                                text (String.fromInt score.playerTwoPoint ++ " (" ++ String.fromInt tb.playerTwoPoint ++ ")")
+
+                -- ✅ Normal completed set (no tiebreak)
+                Nothing ->
+                    case player of
+                        PlayerOne ->
+                            if score.playerOnePoint > score.playerTwoPoint then
+                                strong [] [ text (String.fromInt score.playerOnePoint) ]
+
+                            else
+                                text (String.fromInt score.playerOnePoint)
+
+                        PlayerTwo ->
+                            if score.playerTwoPoint > score.playerOnePoint then
+                                strong [] [ text (String.fromInt score.playerTwoPoint) ]
+
+                            else
+                                text (String.fromInt score.playerTwoPoint)
+
+        -- ✅ If it's the current set being played
+        Nothing ->
+            case matchData.currentSet of
+                Just (SetInProgress score _) ->
+                    if index == List.length matchData.sets then
+                        case player of
+                            PlayerOne ->
+                                text (String.fromInt score.playerOnePoint)
+
+                            PlayerTwo ->
+                                text (String.fromInt score.playerTwoPoint)
+
+                    else
+                        text "0"
+
+                -- future set placeholder
+                _ ->
+                    text "0"
+
+        -- ✅ Safety fallback (should never hit this)
+        Just (SetInProgress score _) ->
+            case player of
+                PlayerOne ->
+                    text (String.fromInt score.playerOnePoint)
+
+                PlayerTwo ->
+                    text (String.fromInt score.playerTwoPoint)
+
+
 playerToString : Player -> String
 playerToString player =
     case player of
@@ -376,260 +586,3 @@ pointToString point =
 
         Forty ->
             "40"
-
-
-view : Model -> Html Msg
-view model =
-    case model.match of
-        MatchInProgress matchData ->
-            viewMatchInProgress matchData
-
-        MatchFinished winner sets ->
-            Html.div []
-                [ Html.h1 [ Html.Attributes.class "grid justify-content-center" ] [ text "🎾 Elm Tennis 2026" ]
-                , viewScoreboard { sets = sets, currentSet = Nothing }
-                , Html.div [ Html.Attributes.class "grid justify-content-center align-items-center" ]
-                    [ Html.p [] [ text ("Winner: " ++ playerToString winner) ]
-                    , Html.button [ Html.Events.onClick NewMatch ] [ text "New Match" ]
-                    ]
-                ]
-
-
-viewMatchInProgress : { sets : List SetResult, currentSet : Maybe SetResult } -> Html Msg
-viewMatchInProgress matchData =
-    Html.div []
-        [ Html.h1 [ Html.Attributes.class "grid justify-content-center" ] [ text "🎾 Elm Tennis 2026" ]
-        , viewScoreboard matchData
-        , Html.div [ Html.Attributes.class "flex justify-content-center gap-0-5" ]
-            [ Html.button [ Html.Events.onClick (PlayerScores PlayerOne) ] [ text "Player 1 Scores" ]
-            , Html.button [ Html.Events.onClick (PlayerScores PlayerTwo) ] [ text "Player 2 Scores" ]
-            ]
-        ]
-
-
-getSetScore : Player -> Int -> { sets : List SetResult, currentSet : Maybe SetResult } -> String
-getSetScore player index matchData =
-    case List.drop index matchData.sets |> List.head of
-        Just (SetFinished _ score _) ->
-            case player of
-                PlayerOne ->
-                    String.fromInt score.playerOnePoint
-
-                PlayerTwo ->
-                    String.fromInt score.playerTwoPoint
-
-        _ ->
-            "-"
-
-
-getCurrentGamePoints : Player -> { sets : List SetResult, currentSet : Maybe SetResult } -> String
-getCurrentGamePoints player matchData =
-    case matchData.currentSet of
-        Just (SetInProgress _ (Just (Ongoing p1 p2))) ->
-            case player of
-                PlayerOne ->
-                    pointToString p1
-
-                PlayerTwo ->
-                    pointToString p2
-
-        Just (SetInProgress _ (Just (Tiebreak p1 p2))) ->
-            case player of
-                PlayerOne ->
-                    "TB " ++ String.fromInt p1
-
-                PlayerTwo ->
-                    "TB " ++ String.fromInt p2
-
-        Just (SetInProgress _ (Just Deuce)) ->
-            "Deuce"
-
-        Just (SetInProgress _ (Just (Advantage p))) ->
-            "Ad " ++ playerToString p
-
-        Just (SetInProgress _ (Just (GameWon p))) ->
-            "Won by " ++ playerToString p
-
-        Just (SetInProgress _ Nothing) ->
-            "0"
-
-        _ ->
-            "-"
-
-
-
--- ✅ Updates view to use getSetDisplay everywhere
-
-
-viewScoreboard : { sets : List SetResult, currentSet : Maybe SetResult } -> Html Msg
-viewScoreboard matchData =
-    Html.div [ Html.Attributes.class "scoreboard" ]
-        [ Html.div [ Html.Attributes.class "heading" ] [ text "Player" ]
-        , Html.div [ Html.Attributes.class "heading" ] [ text "Set 1" ]
-        , Html.div [ Html.Attributes.class "heading" ] [ text "Set 2" ]
-        , Html.div [ Html.Attributes.class "heading" ] [ text "Set 3" ]
-        , Html.div [ Html.Attributes.class "heading" ] [ text "Points" ]
-
-        -- ✅ Player 1 row
-        , Html.div [ Html.Attributes.class "player" ] [ text "Player 1" ]
-        , Html.div [] [ getSetDisplay PlayerOne 0 matchData ]
-        , Html.div [] [ getSetDisplay PlayerOne 1 matchData ]
-        , Html.div [] [ getSetDisplay PlayerOne 2 matchData ]
-        , Html.div [] [ text (getCurrentGamePoints PlayerOne matchData) ]
-
-        -- ✅ Player 2 row
-        , Html.div [ Html.Attributes.class "player" ] [ text "Player 2" ]
-        , Html.div [] [ getSetDisplay PlayerTwo 0 matchData ]
-        , Html.div [] [ getSetDisplay PlayerTwo 1 matchData ]
-        , Html.div [] [ getSetDisplay PlayerTwo 2 matchData ]
-        , Html.div [] [ text (getCurrentGamePoints PlayerTwo matchData) ]
-        ]
-
-
-
--- Get how a set should appear for a given player and set index
-getSetDisplay : Player -> Int -> { sets : List SetResult, currentSet : Maybe SetResult } -> Html Msg
-getSetDisplay player index matchData =
-    case List.drop index matchData.sets |> List.head of
-        -- ✅ Completed set
-        Just (SetFinished winner score maybeTb) ->
-            case maybeTb of
-                -- ✅ Set had a tiebreak
-                Just tb ->
-                    case player of
-                        PlayerOne ->
-                            if score.playerOnePoint > score.playerTwoPoint then
-                                Html.strong [] [ text "7" ]
-                            else
-                                text (String.fromInt score.playerOnePoint ++ " (" ++ String.fromInt tb.playerOne ++ ")")
-                        PlayerTwo ->
-                            if score.playerTwoPoint > score.playerOnePoint then
-                                Html.strong [] [ text "7" ]
-                            else
-                                text (String.fromInt score.playerTwoPoint ++ " (" ++ String.fromInt tb.playerTwo ++ ")")
-                -- ✅ Normal completed set (no tiebreak)
-                Nothing ->
-                    case player of
-                        PlayerOne ->
-                            if score.playerOnePoint > score.playerTwoPoint then
-                                Html.strong [] [ text (String.fromInt score.playerOnePoint) ]
-                            else
-                                text (String.fromInt score.playerOnePoint)
-                        PlayerTwo ->
-                            if score.playerTwoPoint > score.playerOnePoint then
-                                Html.strong [] [ text (String.fromInt score.playerTwoPoint) ]
-                            else
-                                text (String.fromInt score.playerTwoPoint)
-        -- ✅ If it's the current set being played
-        Nothing ->
-            case matchData.currentSet of
-                Just (SetInProgress score _) ->
-                    if index == List.length matchData.sets then
-                        case player of
-                            PlayerOne ->
-                                text (String.fromInt score.playerOnePoint)
-                            PlayerTwo ->
-                                text (String.fromInt score.playerTwoPoint)
-                    else
-                        text "0"
-                -- future set placeholder
-                _ ->
-                    text "0"
-        -- ✅ Safety fallback (should never hit this)
-        Just (SetInProgress score _) ->
-            case player of
-                PlayerOne ->
-                    text (String.fromInt score.playerOnePoint)
-                PlayerTwo ->
-                    text (String.fromInt score.playerTwoPoint)
-
-
-viewMatchFinished : Player -> List SetResult -> Html Msg
-viewMatchFinished winner sets =
-    Html.div []
-        [ Html.h1 [] [ text "Tennis Match" ]
-        , Html.p [] [ text ("Winner: " ++ playerToString winner) ]
-        , Html.p []
-            [ text
-                ("Final Sets: "
-                    ++ String.join ", "
-                        (List.map
-                            (\set ->
-                                case set of
-                                    SetFinished _ score maybeTb ->
-                                        case maybeTb of
-                                            Just tb ->
-                                                let
-                                                    p1 =
-                                                        String.fromInt score.playerOnePoint
-
-                                                    p2 =
-                                                        String.fromInt score.playerTwoPoint
-
-                                                    tb1 =
-                                                        String.fromInt tb.playerOne
-
-                                                    tb2 =
-                                                        String.fromInt tb.playerTwo
-                                                in
-                                                if score.playerOnePoint > score.playerTwoPoint then
-                                                    p1 ++ " - " ++ p2 ++ " (" ++ tb2 ++ ")"
-
-                                                else
-                                                    p1 ++ " - " ++ p2 ++ " (" ++ tb1 ++ ")"
-
-                                            Nothing ->
-                                                String.fromInt score.playerOnePoint ++ " - " ++ String.fromInt score.playerTwoPoint
-
-                                    _ ->
-                                        ""
-                            )
-                            sets
-                        )
-                )
-            ]
-        ]
-
-
-
--- Return full set score as a string like "6-4" or "7-6 (7-5)"
--- Get the number of games won by a specific player in a specific set
-
-
-getSetGameCount : Player -> Int -> { sets : List SetResult, currentSet : Maybe SetResult } -> String
-getSetGameCount player index matchData =
-    case List.drop index matchData.sets |> List.head of
-        Just (SetFinished _ score _) ->
-            case player of
-                PlayerOne ->
-                    String.fromInt score.playerOnePoint
-
-                PlayerTwo ->
-                    String.fromInt score.playerTwoPoint
-
-        -- If this is the current active set (not finished yet)
-        Nothing ->
-            case matchData.currentSet of
-                Just (SetInProgress score _) ->
-                    if index == List.length matchData.sets then
-                        case player of
-                            PlayerOne ->
-                                String.fromInt score.playerOnePoint
-
-                            PlayerTwo ->
-                                String.fromInt score.playerTwoPoint
-
-                    else
-                        "0"
-
-                _ ->
-                    "0"
-
-        -- If a set is stored but not finished (unlikely, but safe)
-        Just (SetInProgress score _) ->
-            case player of
-                PlayerOne ->
-                    String.fromInt score.playerOnePoint
-
-                PlayerTwo ->
-                    String.fromInt score.playerTwoPoint

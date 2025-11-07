@@ -1,5 +1,6 @@
 body {
 	padding-block-start: 3rem;
+	font-family: system-ui, sans-serif;
 }
 
 .scoreboard {
