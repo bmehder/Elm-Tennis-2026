@@ -1,0 +1,55 @@
+	h1 {
+		margin-block: 0.25rem;
+		text-align: center;
+	}
+
+	.scoreboard {
+		display: grid;
+		grid-template-columns: 1.5fr repeat(3, 1fr) 1fr; /* Player column wider */
+		gap: 0.25rem;
+		align-items: center;
+		max-width: 32rem;
+		margin-block: 1rem;
+		margin-inline: auto;
+		background: #f9f9f9;
+		color: initial;
+		text-align: center;
+		border: 1px solid #ccc;
+		border-radius: 0.5rem;
+		padding: 0.5rem;
+	}
+
+	.scoreboard > div {
+		padding: 0.5rem;
+		border-bottom: 1px solid #e0e0e0;
+	}
+
+	/* heading row styling */
+	.heading {
+		font-weight: bold;
+	}
+
+	/* First column (Player names) */
+	.player {
+		text-align: left;
+		font-weight: bold;
+	}
+
+	/* Remove bottom border on last row */
+	.scoreboard > div:nth-last-child(-n + 5) {
+		border-bottom: none;
+	}
+
+  /* Utilities */
+
+  .flex {
+    display: flex;
+  }
+
+  .justify-content-center {
+    justify-content: center;
+  }
+
+  .gap-0-5 {
+    gap: 0.5rem
+  }
