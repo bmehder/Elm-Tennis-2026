@@ -8,11 +8,11 @@
 </head>
 
 <body>
-  <main></main>
-  <script src="elm.js"></script>
+  <div id="tennis-app"></div>
+  <script src="main.js"></script>
   <script>
-    var app = Elm.Main.init({
-      node: document.querySelector('main')
+    const app = Elm.Main.init({
+      node: document.querySelector('#tennis-app')
     });
   </script>
 </body>
