@@ -36,7 +36,7 @@ viewMatchInProgress details =
             , button [ onClick (PlayerScores PlayerTwo) ]
                 [ text "Player 2 Scores" ]
             ]
-        ]
+        ] 
 
 
 viewMatchFinished : Player -> List SetResult -> Html Msg
@@ -61,9 +61,11 @@ viewMatchFinished winner sets =
         [ h1 [ class "grid justify-content-center" ]
             [ text "🎾 Elm Tennis 2026" ]
         , viewScoreboard completedSets currentSet
-        , div [ class "flex justify-content-center" ]
+        , div [ class "grid justify-items-center gap-0-5" ]
             [ strong []
                 [ text ("Winner: " ++ playerToString winner) ]
+            , button [ onClick NewMatch ]
+                [ text "Start New Match" ]
             ]
         ]
 
@@ -102,26 +104,27 @@ viewScoreboard completedSets currentSet =
 
         -- Player 1 row
         , div [ class "player" ] [ text "Player 1" ]
-        , div [] [ strong [] [ text set1.p1 ] ]
-        , div [] [ text set2.p1 ]
-        , div [] [ text set3.p1 ]
+        , div [] [ set1.p1 ]
+        , div [] [ set2.p1 ]
+        , div [] [ set3.p1 ]
         , div [] [ text p1Points ]
 
         -- Player 2 row
         , div [ class "player" ] [ text "Player 2" ]
-        , div [] [ text set1.p2 ]
-        , div [] [ text set2.p2 ]
-        , div [] [ text set3.p2 ]
+        , div [] [ set1.p2 ]
+        , div [] [ set2.p2 ]
+        , div [] [ set3.p2 ]
         , div [] [ text p2Points ]
         ]
+
 
 
 -- HELPERS
 
 
 type alias SetScoreView =
-    { p1 : String
-    , p2 : String
+    { p1 : Html Msg
+    , p2 : Html Msg
     }
 
 
@@ -129,19 +132,52 @@ getSetScore : Int -> List SetResult -> SetScoreView
 getSetScore index sets =
     case List.drop index sets |> List.head of
         Nothing ->
-            { p1 = "0", p2 = "0" }
+            { p1 = text "0"
+            , p2 = text "0"
+            }
 
         Just setResult ->
             case setResult of
-                SetInProgress score _ ->
-                    { p1 = String.fromInt score.playerOnePoint
-                    , p2 = String.fromInt score.playerTwoPoint
+                SetInProgress s _ ->
+                    { p1 = text (String.fromInt s.playerOnePoint)
+                    , p2 = text (String.fromInt s.playerTwoPoint)
                     }
 
-                SetFinished _ score _ ->
-                    { p1 = String.fromInt score.playerOnePoint
-                    , p2 = String.fromInt score.playerTwoPoint
-                    }
+                SetFinished winner s maybeTb ->
+                    let
+                        baseP1 =
+                            String.fromInt s.playerOnePoint
+
+                        baseP2 =
+                            String.fromInt s.playerTwoPoint
+
+                        ( p1Score, p2Score ) =
+                            case maybeTb of
+                                Nothing ->
+                                    ( baseP1, baseP2 )
+
+                                Just tb ->
+                                    case winner of
+                                        PlayerOne ->
+                                            ( baseP1
+                                            , baseP2 ++ " (" ++ String.fromInt tb.playerTwoPoint ++ ")"
+                                            )
+
+                                        PlayerTwo ->
+                                            ( baseP1 ++ " (" ++ String.fromInt tb.playerOnePoint ++ ")"
+                                            , baseP2
+                                            )
+                    in
+                    case winner of
+                        PlayerOne ->
+                            { p1 = strong [] [ text p1Score ]
+                            , p2 = text p2Score
+                            }
+
+                        PlayerTwo ->
+                            { p1 = text p1Score
+                            , p2 = strong [] [ text p2Score ]
+                            }
 
 
 getCurrentGamePoints : SetResult -> ( String, String )
@@ -177,7 +213,6 @@ getCurrentGamePoints setResult =
 
         SetFinished _ _ _ ->
             ( "0", "0" )
-
 
 
 playerToString : Player -> String

@@ -79,6 +79,10 @@ button:disabled {
 	justify-content: center;
 }
 
+.justify-items-center {
+	justify-items: center;
+}
+
 .align-items-center {
 	align-items: center;
 }

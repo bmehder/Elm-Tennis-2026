@@ -5212,15 +5212,6 @@ var $author$project$Types$MatchFinished = F2(
 	function (a, b) {
 		return {$: 'MatchFinished', a: a, b: b};
 	});
-var $author$project$Logic$applyIfMatchInProgress = F2(
-	function (fn, match) {
-		if (match.$ === 'MatchInProgress') {
-			var details = match.a;
-			return fn(details);
-		} else {
-			return match;
-		}
-	});
 var $author$project$Types$PlayerOne = {$: 'PlayerOne'};
 var $author$project$Types$PlayerTwo = {$: 'PlayerTwo'};
 var $elm$core$List$filter = F2(
@@ -5239,9 +5230,9 @@ var $author$project$Logic$countSetWins = F2(
 		return $elm$core$List$length(
 			A2(
 				$elm$core$List$filter,
-				function (s) {
-					if (s.$ === 'SetFinished') {
-						var winner = s.a;
+				function (set) {
+					if (set.$ === 'SetFinished') {
+						var winner = set.a;
 						return _Utils_eq(winner, player);
 					} else {
 						return false;
@@ -5262,8 +5253,17 @@ var $author$project$Logic$setsToWinToInt = function (stw) {
 		return 3;
 	}
 };
+var $author$project$Logic$updateIfMatchInProgress = F2(
+	function (fn, match) {
+		if (match.$ === 'MatchInProgress') {
+			var details = match.a;
+			return fn(details);
+		} else {
+			return match;
+		}
+	});
 var $author$project$Logic$updateMatch = function (setsToWin) {
-	return $author$project$Logic$applyIfMatchInProgress(
+	return $author$project$Logic$updateIfMatchInProgress(
 		function (details) {
 			var allSets = function () {
 				var _v1 = details.currentSet;
@@ -5431,7 +5431,7 @@ var $author$project$Logic$scorePoint = F2(
 		}
 	});
 var $author$project$Logic$updatePoint = function (pointWinner) {
-	return $author$project$Logic$applyIfMatchInProgress(
+	return $author$project$Logic$updateIfMatchInProgress(
 		function (_v0) {
 			var completedSets = _v0.completedSets;
 			var currentSet = _v0.currentSet;
@@ -5478,63 +5478,73 @@ var $author$project$Logic$incrementSetScore = F2(
 				{playerTwoPoint: setScore.playerTwoPoint + 1});
 		}
 	});
-var $author$project$Logic$updateSet = $author$project$Logic$applyIfMatchInProgress(
+var $author$project$Logic$updateSet = $author$project$Logic$updateIfMatchInProgress(
 	function (_v0) {
 		var completedSets = _v0.completedSets;
 		var currentSet = _v0.currentSet;
-		var result = function () {
-			if (currentSet.$ === 'SetInProgress') {
-				var score = currentSet.a;
-				var gameState = currentSet.b;
-				switch (gameState.$) {
-					case 'GameWon':
-						var winner = gameState.a;
-						var newScore = A2($author$project$Logic$incrementSetScore, winner, score);
-						var nextGame = ((newScore.playerOnePoint === 6) && (newScore.playerTwoPoint === 6)) ? A2($author$project$Types$Tiebreak, 0, 0) : A2($author$project$Types$Ongoing, $author$project$Types$Love, $author$project$Types$Love);
-						return $author$project$Logic$hasPlayerWonSet(newScore) ? _Utils_Tuple2(
-							_Utils_ap(
-								completedSets,
-								_List_fromArray(
-									[
-										A3($author$project$Types$SetFinished, winner, newScore, $elm$core$Maybe$Nothing)
-									])),
-							A2(
-								$author$project$Types$SetInProgress,
-								{playerOnePoint: 0, playerTwoPoint: 0},
-								A2($author$project$Types$Ongoing, $author$project$Types$Love, $author$project$Types$Love))) : _Utils_Tuple2(
+		var nextGameFor = function (score) {
+			return ((score.playerOnePoint === 6) && (score.playerTwoPoint === 6)) ? A2($author$project$Types$Tiebreak, 0, 0) : A2($author$project$Types$Ongoing, $author$project$Types$Love, $author$project$Types$Love);
+		};
+		var keepCurrent = $author$project$Types$MatchInProgress(
+			{completedSets: completedSets, currentSet: currentSet});
+		var emptySet = A2(
+			$author$project$Types$SetInProgress,
+			{playerOnePoint: 0, playerTwoPoint: 0},
+			A2($author$project$Types$Ongoing, $author$project$Types$Love, $author$project$Types$Love));
+		var finishSet = F3(
+			function (winner, finalScore, tb) {
+				return $author$project$Types$MatchInProgress(
+					{
+						completedSets: _Utils_ap(
 							completedSets,
-							A2($author$project$Types$SetInProgress, newScore, nextGame));
-					case 'TiebreakWon':
-						var winner = gameState.a;
-						var tb = gameState.b;
-						var newScore = A2($author$project$Logic$incrementSetScore, winner, score);
-						return _Utils_Tuple2(
-							_Utils_ap(
-								completedSets,
-								_List_fromArray(
-									[
-										A3(
-										$author$project$Types$SetFinished,
-										winner,
-										newScore,
-										$elm$core$Maybe$Just(tb))
-									])),
-							A2(
-								$author$project$Types$SetInProgress,
-								{playerOnePoint: 0, playerTwoPoint: 0},
-								A2($author$project$Types$Ongoing, $author$project$Types$Love, $author$project$Types$Love)));
-					default:
-						return _Utils_Tuple2(completedSets, currentSet);
-				}
-			} else {
-				return _Utils_Tuple2(completedSets, currentSet);
+							_List_fromArray(
+								[
+									A3($author$project$Types$SetFinished, winner, finalScore, tb)
+								])),
+						currentSet: emptySet
+					});
+			});
+		var continueSet = function (score) {
+			return $author$project$Types$MatchInProgress(
+				{
+					completedSets: completedSets,
+					currentSet: A2(
+						$author$project$Types$SetInProgress,
+						score,
+						nextGameFor(score))
+				});
+		};
+		var applyTiebreakWon = F3(
+			function (winner, score, tb) {
+				var newScore = A2($author$project$Logic$incrementSetScore, winner, score);
+				return A3(
+					finishSet,
+					winner,
+					newScore,
+					$elm$core$Maybe$Just(tb));
+			});
+		var applyGameWon = F2(
+			function (winner, score) {
+				var newScore = A2($author$project$Logic$incrementSetScore, winner, score);
+				return $author$project$Logic$hasPlayerWonSet(newScore) ? A3(finishSet, winner, newScore, $elm$core$Maybe$Nothing) : continueSet(newScore);
+			});
+		if (currentSet.$ === 'SetInProgress') {
+			var score = currentSet.a;
+			var gameState = currentSet.b;
+			switch (gameState.$) {
+				case 'GameWon':
+					var winner = gameState.a;
+					return A2(applyGameWon, winner, score);
+				case 'TiebreakWon':
+					var winner = gameState.a;
+					var tb = gameState.b;
+					return A3(applyTiebreakWon, winner, score, tb);
+				default:
+					return keepCurrent;
 			}
-		}();
-		var _v1 = result;
-		var newSets = _v1.a;
-		var newCurrentSet = _v1.b;
-		return $author$project$Types$MatchInProgress(
-			{completedSets: newSets, currentSet: newCurrentSet});
+		} else {
+			return keepCurrent;
+		}
 	});
 var $author$project$Main$update = F2(
 	function (msg, model) {
@@ -5554,6 +5564,8 @@ var $author$project$Main$update = F2(
 				{match: $author$project$Main$initialModel.match});
 		}
 	});
+var $author$project$Types$NewMatch = {$: 'NewMatch'};
+var $elm$html$Html$button = _VirtualDom_node('button');
 var $elm$json$Json$Encode$string = _Json_wrap;
 var $elm$html$Html$Attributes$stringProperty = F2(
 	function (key, string) {
@@ -5594,6 +5606,23 @@ var $elm$core$List$head = function (list) {
 	} else {
 		return $elm$core$Maybe$Nothing;
 	}
+};
+var $elm$virtual_dom$VirtualDom$Normal = function (a) {
+	return {$: 'Normal', a: a};
+};
+var $elm$virtual_dom$VirtualDom$on = _VirtualDom_on;
+var $elm$html$Html$Events$on = F2(
+	function (event, decoder) {
+		return A2(
+			$elm$virtual_dom$VirtualDom$on,
+			event,
+			$elm$virtual_dom$VirtualDom$Normal(decoder));
+	});
+var $elm$html$Html$Events$onClick = function (msg) {
+	return A2(
+		$elm$html$Html$Events$on,
+		'click',
+		$elm$json$Json$Decode$succeed(msg));
 };
 var $author$project$View$playerToString = function (player) {
 	if (player.$ === 'PlayerOne') {
@@ -5666,21 +5695,67 @@ var $author$project$View$getSetScore = F2(
 		var _v0 = $elm$core$List$head(
 			A2($elm$core$List$drop, index, sets));
 		if (_v0.$ === 'Nothing') {
-			return {p1: '0', p2: '0'};
+			return {
+				p1: $elm$html$Html$text('0'),
+				p2: $elm$html$Html$text('0')
+			};
 		} else {
 			var setResult = _v0.a;
 			if (setResult.$ === 'SetInProgress') {
-				var score = setResult.a;
+				var s = setResult.a;
 				return {
-					p1: $elm$core$String$fromInt(score.playerOnePoint),
-					p2: $elm$core$String$fromInt(score.playerTwoPoint)
+					p1: $elm$html$Html$text(
+						$elm$core$String$fromInt(s.playerOnePoint)),
+					p2: $elm$html$Html$text(
+						$elm$core$String$fromInt(s.playerTwoPoint))
 				};
 			} else {
-				var score = setResult.b;
-				return {
-					p1: $elm$core$String$fromInt(score.playerOnePoint),
-					p2: $elm$core$String$fromInt(score.playerTwoPoint)
-				};
+				var winner = setResult.a;
+				var s = setResult.b;
+				var maybeTb = setResult.c;
+				var baseP2 = $elm$core$String$fromInt(s.playerTwoPoint);
+				var baseP1 = $elm$core$String$fromInt(s.playerOnePoint);
+				var _v2 = function () {
+					if (maybeTb.$ === 'Nothing') {
+						return _Utils_Tuple2(baseP1, baseP2);
+					} else {
+						var tb = maybeTb.a;
+						if (winner.$ === 'PlayerOne') {
+							return _Utils_Tuple2(
+								baseP1,
+								baseP2 + (' (' + ($elm$core$String$fromInt(tb.playerTwoPoint) + ')')));
+						} else {
+							return _Utils_Tuple2(
+								baseP1 + (' (' + ($elm$core$String$fromInt(tb.playerOnePoint) + ')')),
+								baseP2);
+						}
+					}
+				}();
+				var p1Score = _v2.a;
+				var p2Score = _v2.b;
+				if (winner.$ === 'PlayerOne') {
+					return {
+						p1: A2(
+							$elm$html$Html$strong,
+							_List_Nil,
+							_List_fromArray(
+								[
+									$elm$html$Html$text(p1Score)
+								])),
+						p2: $elm$html$Html$text(p2Score)
+					};
+				} else {
+					return {
+						p1: $elm$html$Html$text(p1Score),
+						p2: A2(
+							$elm$html$Html$strong,
+							_List_Nil,
+							_List_fromArray(
+								[
+									$elm$html$Html$text(p2Score)
+								]))
+					};
+				}
 			}
 		}
 	});
@@ -5768,29 +5843,17 @@ var $author$project$View$viewScoreboard = F2(
 					$elm$html$Html$div,
 					_List_Nil,
 					_List_fromArray(
-						[
-							A2(
-							$elm$html$Html$strong,
-							_List_Nil,
-							_List_fromArray(
-								[
-									$elm$html$Html$text(set1.p1)
-								]))
-						])),
+						[set1.p1])),
 					A2(
 					$elm$html$Html$div,
 					_List_Nil,
 					_List_fromArray(
-						[
-							$elm$html$Html$text(set2.p1)
-						])),
+						[set2.p1])),
 					A2(
 					$elm$html$Html$div,
 					_List_Nil,
 					_List_fromArray(
-						[
-							$elm$html$Html$text(set3.p1)
-						])),
+						[set3.p1])),
 					A2(
 					$elm$html$Html$div,
 					_List_Nil,
@@ -5812,23 +5875,17 @@ var $author$project$View$viewScoreboard = F2(
 					$elm$html$Html$div,
 					_List_Nil,
 					_List_fromArray(
-						[
-							$elm$html$Html$text(set1.p2)
-						])),
+						[set1.p2])),
 					A2(
 					$elm$html$Html$div,
 					_List_Nil,
 					_List_fromArray(
-						[
-							$elm$html$Html$text(set2.p2)
-						])),
+						[set2.p2])),
 					A2(
 					$elm$html$Html$div,
 					_List_Nil,
 					_List_fromArray(
-						[
-							$elm$html$Html$text(set3.p2)
-						])),
+						[set3.p2])),
 					A2(
 					$elm$html$Html$div,
 					_List_Nil,
@@ -5875,7 +5932,7 @@ var $author$project$View$viewMatchFinished = F2(
 					$elm$html$Html$div,
 					_List_fromArray(
 						[
-							$elm$html$Html$Attributes$class('flex justify-content-center')
+							$elm$html$Html$Attributes$class('grid justify-items-center gap-0-5')
 						]),
 					_List_fromArray(
 						[
@@ -5886,30 +5943,22 @@ var $author$project$View$viewMatchFinished = F2(
 								[
 									$elm$html$Html$text(
 									'Winner: ' + $author$project$View$playerToString(winner))
+								])),
+							A2(
+							$elm$html$Html$button,
+							_List_fromArray(
+								[
+									$elm$html$Html$Events$onClick($author$project$Types$NewMatch)
+								]),
+							_List_fromArray(
+								[
+									$elm$html$Html$text('Start New Match')
 								]))
 						]))
 				]));
 	});
 var $author$project$Types$PlayerScores = function (a) {
 	return {$: 'PlayerScores', a: a};
-};
-var $elm$html$Html$button = _VirtualDom_node('button');
-var $elm$virtual_dom$VirtualDom$Normal = function (a) {
-	return {$: 'Normal', a: a};
-};
-var $elm$virtual_dom$VirtualDom$on = _VirtualDom_on;
-var $elm$html$Html$Events$on = F2(
-	function (event, decoder) {
-		return A2(
-			$elm$virtual_dom$VirtualDom$on,
-			event,
-			$elm$virtual_dom$VirtualDom$Normal(decoder));
-	});
-var $elm$html$Html$Events$onClick = function (msg) {
-	return A2(
-		$elm$html$Html$Events$on,
-		'click',
-		$elm$json$Json$Decode$succeed(msg));
 };
 var $author$project$View$viewMatchInProgress = function (details) {
 	return A2(

@@ -14,11 +14,11 @@ module Logic exposing
 import Types exposing (..)
 
 
-applyIfMatchInProgress :
+updateIfMatchInProgress :
     ({ completedSets : List SetResult, currentSet : SetResult } -> Match)
     -> Match
     -> Match
-applyIfMatchInProgress fn match =
+updateIfMatchInProgress fn match =
     case match of
         MatchInProgress details ->
             fn details
@@ -29,7 +29,7 @@ applyIfMatchInProgress fn match =
 
 updatePoint : Player -> Match -> Match
 updatePoint pointWinner =
-    applyIfMatchInProgress <|
+    updateIfMatchInProgress <|
         \{ completedSets, currentSet } ->
             let
                 ( newSets, newCurrentSet ) =
@@ -47,60 +47,78 @@ updatePoint pointWinner =
 
 updateSet : Match -> Match
 updateSet =
-    applyIfMatchInProgress <|
+    updateIfMatchInProgress <|
         \{ completedSets, currentSet } ->
             let
-                result =
-                    case currentSet of
-                        SetInProgress score gameState ->
-                            case gameState of
-                                GameWon winner ->
-                                    let
-                                        newScore =
-                                            incrementSetScore winner score
+                emptySet : SetResult
+                emptySet =
+                    SetInProgress { playerOnePoint = 0, playerTwoPoint = 0 } (Ongoing Love Love)
 
-                                        nextGame =
-                                            if newScore.playerOnePoint == 6 && newScore.playerTwoPoint == 6 then
-                                                Tiebreak 0 0
+                nextGameFor : SetScore -> Game
+                nextGameFor score =
+                    if score.playerOnePoint == 6 && score.playerTwoPoint == 6 then
+                        Tiebreak 0 0
 
-                                            else
-                                                Ongoing Love Love
-                                    in
-                                    if hasPlayerWonSet newScore then
-                                        ( completedSets ++ [ SetFinished winner newScore Nothing ]
-                                        , SetInProgress { playerOnePoint = 0, playerTwoPoint = 0 } (Ongoing Love Love)
-                                        )
+                    else
+                        Ongoing Love Love
 
-                                    else
-                                        ( completedSets
-                                        , SetInProgress newScore nextGame
-                                        )
+                finishSet : Player -> SetScore -> Maybe TiebreakScore -> Match
+                finishSet winner finalScore tb =
+                    MatchInProgress
+                        { completedSets = completedSets ++ [ SetFinished winner finalScore tb ]
+                        , currentSet = emptySet
+                        }
 
-                                TiebreakWon winner tb ->
-                                    let
-                                        newScore =
-                                            incrementSetScore winner score
-                                    in
-                                    ( completedSets ++ [ SetFinished winner newScore (Just tb) ]
-                                    , SetInProgress { playerOnePoint = 0, playerTwoPoint = 0 } (Ongoing Love Love)
-                                    )
+                continueSet : SetScore -> Match
+                continueSet score =
+                    MatchInProgress
+                        { completedSets = completedSets
+                        , currentSet = SetInProgress score (nextGameFor score)
+                        }
 
-                                _ ->
-                                    ( completedSets, currentSet )
+                applyGameWon : Player -> SetScore -> Match
+                applyGameWon winner score =
+                    let
+                        newScore =
+                            incrementSetScore winner score
+                    in
+                    if hasPlayerWonSet newScore then
+                        finishSet winner newScore Nothing
+
+                    else
+                        continueSet newScore
+
+                applyTiebreakWon : Player -> SetScore -> TiebreakScore -> Match
+                applyTiebreakWon winner score tb =
+                    let
+                        newScore =
+                            incrementSetScore winner score
+                    in
+                    finishSet winner newScore (Just tb)
+
+                keepCurrent : Match
+                keepCurrent =
+                    MatchInProgress { completedSets = completedSets, currentSet = currentSet }
+            in
+            case currentSet of
+                SetInProgress score gameState ->
+                    case gameState of
+                        GameWon winner ->
+                            applyGameWon winner score
+
+                        TiebreakWon winner tb ->
+                            applyTiebreakWon winner score tb
 
                         _ ->
-                            ( completedSets, currentSet )
-            in
-            let
-                ( newSets, newCurrentSet ) =
-                    result
-            in
-            MatchInProgress { completedSets = newSets, currentSet = newCurrentSet }
+                            keepCurrent
+
+                _ ->
+                    keepCurrent
 
 
 updateMatch : SetsToWin -> Match -> Match
 updateMatch setsToWin =
-    applyIfMatchInProgress <|
+    updateIfMatchInProgress <|
         \details ->
             let
                 allSets =
@@ -241,8 +259,8 @@ countSetWins : Player -> List SetResult -> Int
 countSetWins player sets =
     List.length <|
         List.filter
-            (\s ->
-                case s of
+            (\set ->
+                case set of
                     SetFinished winner _ _ ->
                         winner == player
 
