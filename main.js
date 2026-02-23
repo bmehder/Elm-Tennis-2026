@@ -5565,6 +5565,23 @@ var $author$project$Main$update = F2(
 				{match: $author$project$Main$newMatch});
 		}
 	});
+var $author$project$View$splitLastSet = function (sets) {
+	var _v0 = $elm$core$List$reverse(sets);
+	if (_v0.b) {
+		var last = _v0.a;
+		var rest = _v0.b;
+		return _Utils_Tuple2(
+			$elm$core$List$reverse(rest),
+			last);
+	} else {
+		return _Utils_Tuple2(
+			_List_Nil,
+			A2(
+				$author$project$Types$SetInProgress,
+				{playerOneGames: 0, playerTwoGames: 0},
+				A2($author$project$Types$Ongoing, $author$project$Types$Love, $author$project$Types$Love)));
+	}
+};
 var $author$project$Types$NewMatch = {$: 'NewMatch'};
 var $elm$html$Html$button = _VirtualDom_node('button');
 var $elm$json$Json$Encode$string = _Json_wrap;
@@ -5604,7 +5621,7 @@ var $author$project$View$playerToString = function (player) {
 var $elm$html$Html$strong = _VirtualDom_node('strong');
 var $elm$virtual_dom$VirtualDom$text = _VirtualDom_text;
 var $elm$html$Html$text = $elm$virtual_dom$VirtualDom$text;
-var $author$project$View$finishedFooter = function (winner) {
+var $author$project$View$viewFinishedFooter = function (winner) {
 	return A2(
 		$elm$html$Html$div,
 		_List_fromArray(
@@ -5633,24 +5650,6 @@ var $author$project$View$finishedFooter = function (winner) {
 					]))
 			]));
 };
-var $author$project$View$splitLastSet = function (sets) {
-	var _v0 = $elm$core$List$reverse(sets);
-	if (_v0.b) {
-		var last = _v0.a;
-		var rest = _v0.b;
-		return _Utils_Tuple2(
-			$elm$core$List$reverse(rest),
-			last);
-	} else {
-		return _Utils_Tuple2(
-			_List_Nil,
-			A2(
-				$author$project$Types$SetInProgress,
-				{playerOneGames: 0, playerTwoGames: 0},
-				A2($author$project$Types$Ongoing, $author$project$Types$Love, $author$project$Types$Love)));
-	}
-};
-var $elm$html$Html$h1 = _VirtualDom_node('h1');
 var $author$project$View$pointToString = function (point) {
 	switch (point.$) {
 		case 'Love':
@@ -5686,10 +5685,10 @@ var $author$project$View$currentGamePoints = function (setResult) {
 			case 'GameWon':
 				if (game.a.$ === 'PlayerOne') {
 					var _v4 = game.a;
-					return _Utils_Tuple2('Game', '');
+					return _Utils_Tuple2('', '');
 				} else {
 					var _v5 = game.a;
-					return _Utils_Tuple2('', 'Game');
+					return _Utils_Tuple2('', '');
 				}
 			case 'Tiebreak':
 				var p1 = game.a;
@@ -5732,7 +5731,7 @@ var $author$project$View$emptySetDisplay = {
 	playerOne: $elm$html$Html$text('0'),
 	playerTwo: $elm$html$Html$text('0')
 };
-var $author$project$View$applyTiebreak = F4(
+var $author$project$View$formatSetScoreWithTiebreak = F4(
 	function (winner, p1, p2, maybeTb) {
 		if (maybeTb.$ === 'Nothing') {
 			return _Utils_Tuple2(p1, p2);
@@ -5753,7 +5752,7 @@ var $author$project$View$finishedSetDisplay = F3(
 	function (winner, setScore, maybeTb) {
 		var baseP2 = $elm$core$String$fromInt(setScore.playerTwoGames);
 		var baseP1 = $elm$core$String$fromInt(setScore.playerOneGames);
-		var _v0 = A4($author$project$View$applyTiebreak, winner, baseP1, baseP2, maybeTb);
+		var _v0 = A4($author$project$View$formatSetScoreWithTiebreak, winner, baseP1, baseP2, maybeTb);
 		var p1Score = _v0.a;
 		var p2Score = _v0.b;
 		if (winner.$ === 'PlayerOne') {
@@ -5816,12 +5815,12 @@ var $author$project$View$formatSetScore = F2(
 			}
 		}
 	});
-var $author$project$View$playerLabel = function (name) {
+var $author$project$View$viewPlayerLabel = function (name) {
 	return A2(
 		$elm$html$Html$div,
 		_List_fromArray(
 			[
-				$elm$html$Html$Attributes$class('player')
+				$elm$html$Html$Attributes$class('strong')
 			]),
 		_List_fromArray(
 			[
@@ -5838,8 +5837,8 @@ var $author$project$View$viewScoreboard = F2(
 		var set2 = A2($author$project$View$formatSetScore, 1, allSets);
 		var set3 = A2($author$project$View$formatSetScore, 2, allSets);
 		var _v0 = $author$project$View$currentGamePoints(currentSet);
-		var p1Points = _v0.a;
-		var p2Points = _v0.b;
+		var playerOnePoints = _v0.a;
+		var playerTwoPoints = _v0.b;
 		return A2(
 			$elm$html$Html$div,
 			_List_fromArray(
@@ -5898,7 +5897,7 @@ var $author$project$View$viewScoreboard = F2(
 						[
 							$elm$html$Html$text('Points')
 						])),
-					$author$project$View$playerLabel('Player 1'),
+					$author$project$View$viewPlayerLabel('Player 1'),
 					A2(
 					$elm$html$Html$div,
 					_List_Nil,
@@ -5919,9 +5918,9 @@ var $author$project$View$viewScoreboard = F2(
 					_List_Nil,
 					_List_fromArray(
 						[
-							$elm$html$Html$text(p1Points)
+							$elm$html$Html$text(playerOnePoints)
 						])),
-					$author$project$View$playerLabel('Player 2'),
+					$author$project$View$viewPlayerLabel('Player 2'),
 					A2(
 					$elm$html$Html$div,
 					_List_Nil,
@@ -5942,7 +5941,7 @@ var $author$project$View$viewScoreboard = F2(
 					_List_Nil,
 					_List_fromArray(
 						[
-							$elm$html$Html$text(p2Points)
+							$elm$html$Html$text(playerTwoPoints)
 						]))
 				]));
 	});
@@ -5956,13 +5955,6 @@ var $author$project$View$viewMatchLayout = F3(
 				]),
 			_List_fromArray(
 				[
-					A2(
-					$elm$html$Html$h1,
-					_List_Nil,
-					_List_fromArray(
-						[
-							$elm$html$Html$text('🎾 Elm Tennis 2026')
-						])),
 					A2($author$project$View$viewScoreboard, completedSets, currentSet),
 					footer
 				]));
@@ -5976,16 +5968,16 @@ var $author$project$View$viewMatchFinished = F2(
 			$author$project$View$viewMatchLayout,
 			completedSets,
 			currentSet,
-			$author$project$View$finishedFooter(winner));
+			$author$project$View$viewFinishedFooter(winner));
 	});
 var $author$project$Types$PlayerWinsPoint = function (a) {
 	return {$: 'PlayerWinsPoint', a: a};
 };
-var $author$project$View$scoringButtons = A2(
+var $author$project$View$viewScoringButtons = A2(
 	$elm$html$Html$div,
 	_List_fromArray(
 		[
-			$elm$html$Html$Attributes$class('flex gap-0-5')
+			$elm$html$Html$Attributes$class('flex flex-wrap gap-0-5')
 		]),
 	_List_fromArray(
 		[
@@ -6013,7 +6005,7 @@ var $author$project$View$scoringButtons = A2(
 				]))
 		]));
 var $author$project$View$viewMatchInProgress = function (details) {
-	return A3($author$project$View$viewMatchLayout, details.completedSets, details.currentSet, $author$project$View$scoringButtons);
+	return A3($author$project$View$viewMatchLayout, details.completedSets, details.currentSet, $author$project$View$viewScoringButtons);
 };
 var $author$project$View$view = function (model) {
 	var _v0 = model.match;

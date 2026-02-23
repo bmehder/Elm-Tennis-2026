@@ -8,7 +8,7 @@ import Types exposing (..)
 
 
 updateIfMatchInProgress :
-    ({ completedSets : List SetResult, currentSet : SetResult } -> Match)
+    ({ completedSets : List Set, currentSet : Set } -> Match)
     -> Match
     -> Match
 updateIfMatchInProgress fn match =
@@ -43,7 +43,7 @@ updateSet =
     updateIfMatchInProgress <|
         \{ completedSets, currentSet } ->
             let
-                startNewSet : SetResult
+                startNewSet : Set
                 startNewSet =
                     SetInProgress { playerOneGames = 0, playerTwoGames = 0 } (Ongoing Love Love)
 
@@ -251,7 +251,7 @@ hasPlayerWonSet { playerOneGames, playerTwoGames } =
     maxScore >= 6 && diff >= 2
 
 
-countSetWins : Player -> List SetResult -> Int
+countSetWins : Player -> List Set -> Int
 countSetWins player sets =
     sets
         |> List.filter
@@ -266,7 +266,7 @@ countSetWins player sets =
         |> List.length
 
 
-matchWinner : Int -> List SetResult -> Maybe Player
+matchWinner : Int -> List Set -> Maybe Player
 matchWinner setsToWin sets =
     let
         playerOneWins =

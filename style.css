@@ -19,27 +19,25 @@ body {
 	border: 1px solid #ccc;
 	border-radius: 0.5rem;
 	padding: 0.5rem;
-}
-
-.scoreboard > div {
-	padding: 0.5rem;
-	border-bottom: 1px solid #e0e0e0;
-}
-
-/* heading row styling */
-.heading {
-	font-weight: bold;
-}
-
-/* First column (Player names) */
-.player {
-	text-align: left;
-	font-weight: bold;
-}
-
-/* Remove bottom border on last row */
-.scoreboard > div:nth-last-child(-n + 5) {
-	border-bottom: none;
+	
+	& > div {
+		padding: 0.5rem;
+		border-bottom: 1px solid #e0e0e0;
+	}
+	
+	.heading {
+		font-weight: bold;
+	}
+	
+	.player {
+		text-align: left;
+		font-weight: bold;
+	}
+	
+	/* Remove bottom border on last row */
+	> div:nth-last-child(-n + 5) {
+		border-bottom: none;
+	}
 }
 
 button {
@@ -50,27 +48,42 @@ button {
   cursor: pointer;
   font: inherit; /* keep your app’s font */
   transition: background-color 0.15s, border-color 0.15s, box-shadow 0.15s;
+	
+	&:hover {
+		background-color: #f0f0f0;
+		border-color: #bbb;
+	}
+	
+	&:active {
+		background-color: #e8e8e8;
+		border-color: #aaa;
+	}
+	
+	&:disabled {
+		opacity: 0.5;
+		cursor: not-allowed;
+	}
 }
 
-button:hover {
-  background-color: #f0f0f0;
-  border-color: #bbb;
-}
+/* Parametric Utilities */
+.inner {
+	--inner-max-width: 48rem;
+	--inner-padding-inline: 3rem;
+	--inner-padding-block: 3rem;
 
-button:active {
-  background-color: #e8e8e8;
-  border-color: #aaa;
-}
-
-button:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
+	inline-size: min(calc(100% - var(--inner-padding-inline)), var(--inner-max-width));
+	margin-inline: auto;
+	padding-block: var(--inner-padding-block);
 }
 
 /* Utilities */
 
 .flex {
 	display: flex;
+}
+
+.flex-wrap {
+	flex-wrap: wrap;
 }
 
 .grid {
@@ -95,4 +108,8 @@ button:disabled {
 
 .gap-1-5 {
 	gap: 1.5rem;
+}
+
+.strong {
+	font-weight: bold;
 }

@@ -1,6 +1,6 @@
 module View exposing (view)
 
-import Html exposing (Html, button, div, h1, strong, text)
+import Html exposing (Html, button, div, strong, text)
 import Html.Attributes exposing (class)
 import Html.Events exposing (onClick)
 import Types exposing (..)
@@ -25,18 +25,18 @@ view model =
 
 
 viewMatchInProgress :
-    { completedSets : List SetResult
-    , currentSet : SetResult
+    { completedSets : List Set
+    , currentSet : Set
     }
     -> Html Msg
 viewMatchInProgress details =
     viewMatchLayout
         details.completedSets
         details.currentSet
-        scoringButtons
+        viewScoringButtons
 
 
-viewMatchFinished : Player -> List SetResult -> Html Msg
+viewMatchFinished : Player -> List Set -> Html Msg
 viewMatchFinished winner sets =
     let
         ( completedSets, currentSet ) =
@@ -45,7 +45,7 @@ viewMatchFinished winner sets =
     viewMatchLayout
         completedSets
         currentSet
-        (finishedFooter winner)
+        (viewFinishedFooter winner)
 
 
 
@@ -53,22 +53,20 @@ viewMatchFinished winner sets =
 
 
 viewMatchLayout :
-    List SetResult
-    -> SetResult
+    List Set
+    -> Set
     -> Html Msg
     -> Html Msg
 viewMatchLayout completedSets currentSet footer =
     div [ class "grid justify-items-center gap-1-5" ]
-        [ h1 [ ]
-            [ text "🎾 Elm Tennis 2026" ]
-        , viewScoreboard completedSets currentSet
+        [ viewScoreboard completedSets currentSet
         , footer
         ]
 
 
-scoringButtons : Html Msg
-scoringButtons =
-    div [ class "flex gap-0-5" ]
+viewScoringButtons : Html Msg
+viewScoringButtons =
+    div [ class "flex flex-wrap gap-0-5" ]
         [ button [ onClick (PlayerWinsPoint PlayerOne) ]
             [ text "Player 1 Scores" ]
         , button [ onClick (PlayerWinsPoint PlayerTwo) ]
@@ -76,8 +74,8 @@ scoringButtons =
         ]
 
 
-finishedFooter : Player -> Html Msg
-finishedFooter winner =
+viewFinishedFooter : Player -> Html Msg
+viewFinishedFooter winner =
     div [ class "grid justify-items-center gap-1" ]
         [ strong []
             [ text ("Winner: " ++ playerToString winner) ]
@@ -86,7 +84,7 @@ finishedFooter winner =
         ]
 
 
-splitLastSet : List SetResult -> ( List SetResult, SetResult )
+splitLastSet : List Set -> ( List Set, Set )
 splitLastSet sets =
     case List.reverse sets of
         last :: rest ->
@@ -103,8 +101,8 @@ splitLastSet sets =
 
 
 viewScoreboard :
-    List SetResult
-    -> SetResult
+    List Set
+    -> Set
     -> Html Msg
 viewScoreboard completedSets currentSet =
     let
@@ -120,7 +118,7 @@ viewScoreboard completedSets currentSet =
         set3 =
             formatSetScore 2 allSets
 
-        ( p1Points, p2Points ) =
+        ( playerOnePoints, playerTwoPoints ) =
             currentGamePoints currentSet
     in
     div [ class "scoreboard" ]
@@ -131,24 +129,24 @@ viewScoreboard completedSets currentSet =
         , div [ class "heading" ] [ text "Points" ]
 
         -- Player 1
-        , playerLabel "Player 1"
+        , viewPlayerLabel "Player 1"
         , div [] [ set1.playerOne ]
         , div [] [ set2.playerOne ]
         , div [] [ set3.playerOne ]
-        , div [] [ text p1Points ]
+        , div [] [ text playerOnePoints ]
 
         -- Player 2
-        , playerLabel "Player 2"
+        , viewPlayerLabel "Player 2"
         , div [] [ set1.playerTwo ]
         , div [] [ set2.playerTwo ]
         , div [] [ set3.playerTwo ]
-        , div [] [ text p2Points ]
+        , div [] [ text playerTwoPoints ]
         ]
 
 
-playerLabel : String -> Html Msg
-playerLabel name =
-    div [ class "player" ] [ text name ]
+viewPlayerLabel : String -> Html Msg
+viewPlayerLabel name =
+    div [ class "strong" ] [ text name ]
 
 
 
@@ -161,7 +159,7 @@ type alias SetScoreDisplay =
     }
 
 
-formatSetScore : Int -> List SetResult -> SetScoreDisplay
+formatSetScore : Int -> List Set -> SetScoreDisplay
 formatSetScore index sets =
     case List.drop index sets |> List.head of
         Nothing ->
@@ -204,7 +202,7 @@ finishedSetDisplay winner setScore maybeTb =
             String.fromInt setScore.playerTwoGames
 
         ( p1Score, p2Score ) =
-            applyTiebreak winner baseP1 baseP2 maybeTb
+            formatSetScoreWithTiebreak winner baseP1 baseP2 maybeTb
     in
     case winner of
         PlayerOne ->
@@ -218,13 +216,13 @@ finishedSetDisplay winner setScore maybeTb =
             }
 
 
-applyTiebreak :
+formatSetScoreWithTiebreak :
     Player
     -> String
     -> String
     -> Maybe TiebreakScore
     -> ( String, String )
-applyTiebreak winner p1 p2 maybeTb =
+formatSetScoreWithTiebreak winner p1 p2 maybeTb =
     case maybeTb of
         Nothing ->
             ( p1, p2 )
@@ -246,7 +244,7 @@ applyTiebreak winner p1 p2 maybeTb =
 -- CURRENT GAME DISPLAY
 
 
-currentGamePoints : SetResult -> ( String, String )
+currentGamePoints : Set -> ( String, String )
 currentGamePoints setResult =
     case setResult of
         SetInProgress _ game ->
@@ -264,10 +262,10 @@ currentGamePoints setResult =
                     ( "", "Ad" )
 
                 GameWon PlayerOne ->
-                    ( "Game", "" )
+                    ( "", "" )
 
                 GameWon PlayerTwo ->
-                    ( "", "Game" )
+                    ( "", "" )
 
                 Tiebreak p1 p2 ->
                     ( String.fromInt p1, String.fromInt p2 )

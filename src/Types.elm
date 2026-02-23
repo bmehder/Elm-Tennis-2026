@@ -6,7 +6,7 @@ module Types exposing
     , Msg(..)
     , Player(..)
     , Point(..)
-    , SetResult(..)
+    , Set(..)
     , SetScore
     , SetsToWin(..)
     , TiebreakScore
@@ -56,7 +56,7 @@ type alias TiebreakScore =
     }
 
 
-type SetResult
+type Set
     = SetInProgress SetScore Game
     | SetFinished Player SetScore (Maybe TiebreakScore)
 
@@ -67,10 +67,10 @@ type SetResult
 
 type Match
     = MatchInProgress
-        { completedSets : List SetResult
-        , currentSet : SetResult
+        { completedSets : List Set
+        , currentSet : Set
         }
-    | MatchFinished Player (List SetResult)
+    | MatchFinished Player (List Set)
 
 
 type SetsToWin
