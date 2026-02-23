@@ -45,8 +45,8 @@ type Game
 
 
 type alias SetScore =
-    { playerOnePoint : Int
-    , playerTwoPoint : Int
+    { playerOneGames : Int
+    , playerTwoGames : Int
     }
 
 
@@ -94,5 +94,5 @@ type alias Model =
 
 
 type Msg
-    = PlayerScores Player
+    = PlayerWinsPoint Player
     | NewMatch

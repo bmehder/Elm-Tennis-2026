@@ -1,3 +1,9 @@
+* {
+	box-sizing: border-box;
+	margin: 0;
+	padding: 0;
+}
+
 body {
 	padding-block-start: 3rem;
 	font-family: system-ui, sans-serif;
@@ -6,11 +12,7 @@ body {
 .scoreboard {
 	display: grid;
 	grid-template-columns: 1.5fr repeat(3, 1fr) 1fr; /* Player column wider */
-	gap: 0.25rem;
-	align-items: center;
-	max-width: 32rem;
-	margin-block: 1rem;
-	margin-inline: auto;
+	gap: 0.5rem;
 	background: #f9f9f9;
 	color: initial;
 	text-align: center;
@@ -75,10 +77,6 @@ button:disabled {
 	display: grid;
 }
 
-.justify-content-center {
-	justify-content: center;
-}
-
 .justify-items-center {
 	justify-items: center;
 }
@@ -89,4 +87,12 @@ button:disabled {
 
 .gap-0-5 {
 	gap: 0.5rem;
+}
+
+.gap-1 {
+	gap: 1rem;
+}
+
+.gap-1-5 {
+	gap: 1.5rem;
 }

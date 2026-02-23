@@ -1,12 +1,5 @@
 module Logic exposing
-    ( countSetWins
-    , hasPlayerWonSet
-    , incrementSetScore
-    , matchWinner
-    , nextPoint
-    , scorePoint
-    , setsToWinToInt
-    , updateMatch
+    ( updateMatch
     , updatePoint
     , updateSet
     )
@@ -50,70 +43,73 @@ updateSet =
     updateIfMatchInProgress <|
         \{ completedSets, currentSet } ->
             let
-                emptySet : SetResult
-                emptySet =
-                    SetInProgress { playerOnePoint = 0, playerTwoPoint = 0 } (Ongoing Love Love)
+                startNewSet : SetResult
+                startNewSet =
+                    SetInProgress { playerOneGames = 0, playerTwoGames = 0 } (Ongoing Love Love)
 
-                nextGameFor : SetScore -> Game
-                nextGameFor score =
-                    if score.playerOnePoint == 6 && score.playerTwoPoint == 6 then
+                nextGameAfterSetScore : SetScore -> Game
+                nextGameAfterSetScore score =
+                    if score.playerOneGames == 6 && score.playerTwoGames == 6 then
                         Tiebreak 0 0
 
                     else
                         Ongoing Love Love
 
-                finishSet : Player -> SetScore -> Maybe TiebreakScore -> Match
-                finishSet winner finalScore tb =
+                finalizeSet : Player -> SetScore -> Maybe TiebreakScore -> Match
+                finalizeSet winner finalScore maybeTb =
                     MatchInProgress
-                        { completedSets = completedSets ++ [ SetFinished winner finalScore tb ]
-                        , currentSet = emptySet
+                        { completedSets = completedSets ++ [ SetFinished winner finalScore maybeTb ]
+                        , currentSet = startNewSet
                         }
 
-                continueSet : SetScore -> Match
-                continueSet score =
+                continueSetWithUpdatedScore : SetScore -> Match
+                continueSetWithUpdatedScore updatedScore =
                     MatchInProgress
                         { completedSets = completedSets
-                        , currentSet = SetInProgress score (nextGameFor score)
+                        , currentSet = SetInProgress updatedScore (nextGameAfterSetScore updatedScore)
                         }
 
-                applyGameWon : Player -> SetScore -> Match
-                applyGameWon winner score =
+                resolveGameWin : Player -> SetScore -> Match
+                resolveGameWin winner score =
                     let
-                        newScore =
+                        updatedScore =
                             incrementSetScore winner score
                     in
-                    if hasPlayerWonSet newScore then
-                        finishSet winner newScore Nothing
+                    if hasPlayerWonSet updatedScore then
+                        finalizeSet winner updatedScore Nothing
 
                     else
-                        continueSet newScore
+                        continueSetWithUpdatedScore updatedScore
 
-                applyTiebreakWon : Player -> SetScore -> TiebreakScore -> Match
-                applyTiebreakWon winner score tb =
+                resolveTiebreakWin : Player -> SetScore -> TiebreakScore -> Match
+                resolveTiebreakWin winner score tb =
                     let
-                        newScore =
+                        updatedScore =
                             incrementSetScore winner score
                     in
-                    finishSet winner newScore (Just tb)
+                    finalizeSet winner updatedScore (Just tb)
 
-                keepCurrent : Match
-                keepCurrent =
-                    MatchInProgress { completedSets = completedSets, currentSet = currentSet }
+                noSetChange : Match
+                noSetChange =
+                    MatchInProgress
+                        { completedSets = completedSets
+                        , currentSet = currentSet
+                        }
             in
             case currentSet of
                 SetInProgress score gameState ->
                     case gameState of
                         GameWon winner ->
-                            applyGameWon winner score
+                            resolveGameWin winner score
 
                         TiebreakWon winner tb ->
-                            applyTiebreakWon winner score tb
+                            resolveTiebreakWin winner score tb
 
                         _ ->
-                            keepCurrent
+                            noSetChange
 
                 _ ->
-                    keepCurrent
+                    noSetChange
 
 
 updateMatch : SetsToWin -> Match -> Match
@@ -140,8 +136,8 @@ updateMatch setsToWin =
 scorePoint : Player -> Game -> Game
 scorePoint pointWinner gameState =
     case gameState of
-        Ongoing playerOnePoint playerTwoPoint ->
-            case ( pointWinner, playerOnePoint, playerTwoPoint ) of
+        Ongoing playerOneGames playerTwoPoint ->
+            case ( pointWinner, playerOneGames, playerTwoPoint ) of
                 ( PlayerOne, Thirty, Forty ) ->
                     Deuce
 
@@ -155,10 +151,10 @@ scorePoint pointWinner gameState =
                     GameWon PlayerTwo
 
                 ( PlayerOne, _, _ ) ->
-                    Ongoing (nextPoint playerOnePoint) playerTwoPoint
+                    Ongoing (nextPoint playerOneGames) playerTwoPoint
 
                 ( PlayerTwo, _, _ ) ->
-                    Ongoing playerOnePoint (nextPoint playerTwoPoint)
+                    Ongoing playerOneGames (nextPoint playerTwoPoint)
 
         Deuce ->
             Advantage pointWinner
@@ -227,15 +223,15 @@ incrementSetScore : Player -> SetScore -> SetScore
 incrementSetScore player setScore =
     case player of
         PlayerOne ->
-            { setScore | playerOnePoint = setScore.playerOnePoint + 1 }
+            { setScore | playerOneGames = setScore.playerOneGames + 1 }
 
         PlayerTwo ->
-            { setScore | playerTwoPoint = setScore.playerTwoPoint + 1 }
+            { setScore | playerTwoGames = setScore.playerTwoGames + 1 }
 
 
 setsToWinToInt : SetsToWin -> Int
-setsToWinToInt stw =
-    case stw of
+setsToWinToInt setsToWin =
+    case setsToWin of
         BestOfThree ->
             2
 
@@ -244,21 +240,21 @@ setsToWinToInt stw =
 
 
 hasPlayerWonSet : SetScore -> Bool
-hasPlayerWonSet { playerOnePoint, playerTwoPoint } =
+hasPlayerWonSet { playerOneGames, playerTwoGames } =
     let
         diff =
-            abs (playerOnePoint - playerTwoPoint)
+            abs (playerOneGames - playerTwoGames)
 
         maxScore =
-            max playerOnePoint playerTwoPoint
+            max playerOneGames playerTwoGames
     in
     maxScore >= 6 && diff >= 2
 
 
 countSetWins : Player -> List SetResult -> Int
 countSetWins player sets =
-    List.length <|
-        List.filter
+    sets
+        |> List.filter
             (\set ->
                 case set of
                     SetFinished winner _ _ ->
@@ -267,7 +263,7 @@ countSetWins player sets =
                     _ ->
                         False
             )
-            sets
+        |> List.length
 
 
 matchWinner : Int -> List SetResult -> Maybe Player

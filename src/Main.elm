@@ -1,7 +1,7 @@
 module Main exposing (main)
 
 import Browser
-import Logic exposing (..)
+import Logic exposing (updateMatch, updatePoint, updateSet)
 import Types exposing (..)
 import View exposing (view)
 
@@ -11,10 +11,15 @@ initialModel =
     { match =
         MatchInProgress
             { completedSets = []
-            , currentSet = SetInProgress { playerOnePoint = 0, playerTwoPoint = 0 } (Ongoing Love Love)
+            , currentSet = SetInProgress { playerOneGames = 0, playerTwoGames = 0 } (Ongoing Love Love)
             }
     , config = { setsToWin = BestOfThree }
     }
+
+
+newMatch : Match
+newMatch =
+    initialModel.match
 
 
 main : Program () Model Msg
@@ -29,15 +34,15 @@ main =
 update : Msg -> Model -> Model
 update msg model =
     case msg of
-        PlayerScores player ->
+        PlayerWinsPoint player ->
             let
-                newMatch =
+                nextMatchState =
                     model.match
                         |> updatePoint player
                         |> updateSet
                         |> updateMatch model.config.setsToWin
             in
-            { model | match = newMatch }
+            { model | match = nextMatchState }
 
         NewMatch ->
-            { model | match = initialModel.match }
+            { model | match = newMatch }

@@ -1,107 +1,148 @@
 # 🎾 Elm Tennis 2026
 
-Elm Tennis 2026 is a small Elm application that models and displays a single tennis match between two players. It focuses on accurate tennis scoring logic — games, sets, tiebreaks, and match completion — using Elm's strong type system and pure functions.
+A clean, focused tennis match scorekeeper built in Elm.
+
+This app models real tennis scoring — including games, sets, tiebreaks, and match formats — with a small, readable architecture and no external dependencies.
+
+It is intentionally minimal, both in UI and in structure.
 
 ---
 
-## ✅ Features
+## ✨ Features
 
-- **Two-player tennis match**
-- **Accurate scoring logic**:
-  - Love → 15 → 30 → 40 → Deuce → Advantage → Game
-  - Win a set by 2 games (e.g. 6–4) or 7–5
-  - Tiebreak at 6–6 (first to 7, win by 2)
-- **Match results**:
-  - Best-of-3 or Best-of-5 sets (configured at match start)
-  - Automatically detects winner
-- **UI elements**:
-  - Shows set scores and current game score
-  - Shows “Ad” and “40” correctly during advantage
-  - Highlights set winners in the scoreboard
-  - “Player 1 Scores”, “Player 2 Scores” buttons
-  - “New Match” button when finished
-- **Pure Elm — no ports, no JavaScript interop**
+- Real tennis point progression (Love → 15 → 30 → 40 → Deuce → Advantage)
+- Game resolution
+- Set resolution
+- Tiebreak handling (with proper score display formatting)
+- Best of 3 or Best of 5 match configuration
+- Automatic match winner detection
+- Bold display of set winners
+- Tiebreak score shown in parentheses (e.g. `7–6 (3)`)
+- Restart match functionality
 
 ---
 
-## 🗂 Project Structure
+## 🧠 Architecture
 
-```
-src/
-  Main.elm        -- Model, update logic, and view
-```
+The application is structured around three clear layers:
 
-The entire application currently exists in a single file. View refactoring and module separation are planned for the future.
+### 1. Types
+
+Domain modeling of:
+
+- `Point`
+- `Game`
+- `SetResult`
+- `Match`
+- `SetsToWin`
+
+All tennis rules are encoded explicitly in the type system.
 
 ---
 
-## ▶ How to Run
+### 2. Logic
 
-### Option 1: elm reactor (quickest)
+Pure functions that transform match state:
+
+- `updatePoint`
+- `updateSet`
+- `updateMatch`
+
+Each transformation step is isolated and composable.
+
+No side effects.
+No commands.
+No ports.
+
+---
+
+### 3. View
+
+Declarative rendering of:
+
+- Match in progress
+- Match finished
+- Scoreboard
+- Set score formatting
+- Tiebreak formatting
+
+The view layer focuses only on presentation logic.
+
+---
+
+## 🛠 Development
+
+### Install Elm
 
 ```bash
-elm reactor
+npm install -g elm
 ```
 
-Then open `http://localhost:8000/` and click `src/Main.elm`.
-
-### Option 2: Compile to JS
+(Optional but recommended for development:)
 
 ```bash
-elm make src/Main.elm --output=elm.js
-open index.html   # or serve it statically / deploy
+npm install -g elm-live
 ```
+
+---
+
+### Run in Development Mode
+
+If you have `elm-live` installed and a `dev` script in `package.json`:
+
+```bash
+npm run dev
+```
+
+This provides:
+
+- Automatic rebuild
+- Auto-refresh
+- Fast feedback loop
+
+---
+
+### Manual Compile
+
+```bash
+elm make src/Main.elm --output=main.js
+```
+
 Then open `index.html` in your browser.
 
 ---
 
-## 🎮 How Scoring Works
+## 📂 Project Structure
 
-| Level   | Rules                                                                 |
-|---------|-----------------------------------------------------------------------|
-| Game    | Love → 15 → 30 → 40 → Deuce → Ad → Game                               |
-| Set     | First to 6, must win by 2 (6–4, 7–5) or tiebreak at 6–6               |
-| Match   | Best-of-3 sets (first to 2 sets wins the match)                      |
-| Tiebreak| First to 7, must win by 2 (score shown like `7–6 (7–4)` internally)   |
+```
+src/
+  Main.elm
+  Types.elm
+  Logic.elm
+  View.elm
 
----
+index.html
+style.css
+```
 
-## 🛠 Future Improvements
-
-- Split logic and view into separate modules (e.g. `View/Scoreboard.elm`)
-- Expose Best-of-3 or Best-of-5 configuration in the UI (currently only internal code setting)
-- Save match progress to local storage
-- Add styling or animations
-- Unit tests for scoring functions
+Each file has a single responsibility.
 
 ---
 
-## 🧠 Purpose
+## 🎯 Design Philosophy
 
-This project is both a working tennis scorer and a learning exercise in Elm — emphasizing readability, pure functions, and refactoring over time.
+This project intentionally favors:
+
+- Small, readable functions
+- Clear domain modeling
+- Minimal abstraction
+- Explicit state transitions
+- Straightforward view structure
+
+It is designed to be understood quickly.
 
 ---
 
-## 📄 License
+## 📜 License
 
-MIT License
-
-Copyright (c) 2026 Bradley Mehder
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
+MIT
