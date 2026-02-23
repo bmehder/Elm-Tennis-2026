@@ -5827,126 +5827,138 @@ var $author$project$View$viewPlayerLabel = function (name) {
 				$elm$html$Html$text(name)
 			]));
 };
-var $author$project$View$viewScoreboard = F2(
-	function (completedSets, currentSet) {
+var $author$project$View$viewScoreboard = F3(
+	function (setsToWin, completedSets, currentSet) {
+		var maxSets = function () {
+			if (setsToWin.$ === 'BestOfThree') {
+				return 3;
+			} else {
+				return 5;
+			}
+		}();
 		var allSets = _Utils_ap(
 			completedSets,
 			_List_fromArray(
 				[currentSet]));
-		var set1 = A2($author$project$View$formatSetScore, 0, allSets);
-		var set2 = A2($author$project$View$formatSetScore, 1, allSets);
-		var set3 = A2($author$project$View$formatSetScore, 2, allSets);
+		var setColumns = A2(
+			$elm$core$List$map,
+			function (i) {
+				return A2($author$project$View$formatSetScore, i, allSets);
+			},
+			A2($elm$core$List$range, 0, maxSets - 1));
+		var headings = A2(
+			$elm$core$List$cons,
+			A2(
+				$elm$html$Html$div,
+				_List_fromArray(
+					[
+						$elm$html$Html$Attributes$class('heading')
+					]),
+				_List_fromArray(
+					[
+						$elm$html$Html$text('Player')
+					])),
+			_Utils_ap(
+				A2(
+					$elm$core$List$indexedMap,
+					F2(
+						function (i, _v2) {
+							return A2(
+								$elm$html$Html$div,
+								_List_fromArray(
+									[
+										$elm$html$Html$Attributes$class('heading')
+									]),
+								_List_fromArray(
+									[
+										$elm$html$Html$text(
+										'Set ' + $elm$core$String$fromInt(i + 1))
+									]));
+						}),
+					setColumns),
+				_List_fromArray(
+					[
+						A2(
+						$elm$html$Html$div,
+						_List_fromArray(
+							[
+								$elm$html$Html$Attributes$class('heading')
+							]),
+						_List_fromArray(
+							[
+								$elm$html$Html$text('Points')
+							]))
+					])));
 		var _v0 = $author$project$View$currentGamePoints(currentSet);
 		var playerOnePoints = _v0.a;
 		var playerTwoPoints = _v0.b;
+		var playerOneRow = A2(
+			$elm$core$List$cons,
+			$author$project$View$viewPlayerLabel('Player 1'),
+			_Utils_ap(
+				A2(
+					$elm$core$List$map,
+					function (s) {
+						return A2(
+							$elm$html$Html$div,
+							_List_Nil,
+							_List_fromArray(
+								[s.playerOne]));
+					},
+					setColumns),
+				_List_fromArray(
+					[
+						A2(
+						$elm$html$Html$div,
+						_List_Nil,
+						_List_fromArray(
+							[
+								$elm$html$Html$text(playerOnePoints)
+							]))
+					])));
+		var playerTwoRow = A2(
+			$elm$core$List$cons,
+			$author$project$View$viewPlayerLabel('Player 2'),
+			_Utils_ap(
+				A2(
+					$elm$core$List$map,
+					function (s) {
+						return A2(
+							$elm$html$Html$div,
+							_List_Nil,
+							_List_fromArray(
+								[s.playerTwo]));
+					},
+					setColumns),
+				_List_fromArray(
+					[
+						A2(
+						$elm$html$Html$div,
+						_List_Nil,
+						_List_fromArray(
+							[
+								$elm$html$Html$text(playerTwoPoints)
+							]))
+					])));
 		return A2(
 			$elm$html$Html$div,
 			_List_fromArray(
 				[
-					$elm$html$Html$Attributes$class('scoreboard')
+					$elm$html$Html$Attributes$class(
+					'scoreboard ' + function () {
+						if (setsToWin.$ === 'BestOfThree') {
+							return 'best-of-3';
+						} else {
+							return 'best-of-5';
+						}
+					}())
 				]),
-			_List_fromArray(
-				[
-					A2(
-					$elm$html$Html$div,
-					_List_fromArray(
-						[
-							$elm$html$Html$Attributes$class('heading')
-						]),
-					_List_fromArray(
-						[
-							$elm$html$Html$text('Player')
-						])),
-					A2(
-					$elm$html$Html$div,
-					_List_fromArray(
-						[
-							$elm$html$Html$Attributes$class('heading')
-						]),
-					_List_fromArray(
-						[
-							$elm$html$Html$text('Set 1')
-						])),
-					A2(
-					$elm$html$Html$div,
-					_List_fromArray(
-						[
-							$elm$html$Html$Attributes$class('heading')
-						]),
-					_List_fromArray(
-						[
-							$elm$html$Html$text('Set 2')
-						])),
-					A2(
-					$elm$html$Html$div,
-					_List_fromArray(
-						[
-							$elm$html$Html$Attributes$class('heading')
-						]),
-					_List_fromArray(
-						[
-							$elm$html$Html$text('Set 3')
-						])),
-					A2(
-					$elm$html$Html$div,
-					_List_fromArray(
-						[
-							$elm$html$Html$Attributes$class('heading')
-						]),
-					_List_fromArray(
-						[
-							$elm$html$Html$text('Points')
-						])),
-					$author$project$View$viewPlayerLabel('Player 1'),
-					A2(
-					$elm$html$Html$div,
-					_List_Nil,
-					_List_fromArray(
-						[set1.playerOne])),
-					A2(
-					$elm$html$Html$div,
-					_List_Nil,
-					_List_fromArray(
-						[set2.playerOne])),
-					A2(
-					$elm$html$Html$div,
-					_List_Nil,
-					_List_fromArray(
-						[set3.playerOne])),
-					A2(
-					$elm$html$Html$div,
-					_List_Nil,
-					_List_fromArray(
-						[
-							$elm$html$Html$text(playerOnePoints)
-						])),
-					$author$project$View$viewPlayerLabel('Player 2'),
-					A2(
-					$elm$html$Html$div,
-					_List_Nil,
-					_List_fromArray(
-						[set1.playerTwo])),
-					A2(
-					$elm$html$Html$div,
-					_List_Nil,
-					_List_fromArray(
-						[set2.playerTwo])),
-					A2(
-					$elm$html$Html$div,
-					_List_Nil,
-					_List_fromArray(
-						[set3.playerTwo])),
-					A2(
-					$elm$html$Html$div,
-					_List_Nil,
-					_List_fromArray(
-						[
-							$elm$html$Html$text(playerTwoPoints)
-						]))
-				]));
+			_Utils_ap(
+				headings,
+				_Utils_ap(playerOneRow, playerTwoRow)));
 	});
-var $author$project$View$viewMatchLayout = F3(
-	function (completedSets, currentSet, footer) {
+var $author$project$View$viewMatchLayout = F4(
+	function (setsToWin, completedSets, currentSet, footer) {
 		return A2(
 			$elm$html$Html$div,
 			_List_fromArray(
@@ -5955,17 +5967,18 @@ var $author$project$View$viewMatchLayout = F3(
 				]),
 			_List_fromArray(
 				[
-					A2($author$project$View$viewScoreboard, completedSets, currentSet),
+					A3($author$project$View$viewScoreboard, setsToWin, completedSets, currentSet),
 					footer
 				]));
 	});
-var $author$project$View$viewMatchFinished = F2(
-	function (winner, sets) {
+var $author$project$View$viewMatchFinished = F3(
+	function (setsToWin, winner, sets) {
 		var _v0 = $author$project$View$splitLastSet(sets);
 		var completedSets = _v0.a;
 		var currentSet = _v0.b;
-		return A3(
+		return A4(
 			$author$project$View$viewMatchLayout,
+			setsToWin,
 			completedSets,
 			currentSet,
 			$author$project$View$viewFinishedFooter(winner));
@@ -6004,18 +6017,19 @@ var $author$project$View$viewScoringButtons = A2(
 					$elm$html$Html$text('Player 2 Scores')
 				]))
 		]));
-var $author$project$View$viewMatchInProgress = function (details) {
-	return A3($author$project$View$viewMatchLayout, details.completedSets, details.currentSet, $author$project$View$viewScoringButtons);
-};
+var $author$project$View$viewMatchInProgress = F2(
+	function (setsToWin, details) {
+		return A4($author$project$View$viewMatchLayout, setsToWin, details.completedSets, details.currentSet, $author$project$View$viewScoringButtons);
+	});
 var $author$project$View$view = function (model) {
 	var _v0 = model.match;
 	if (_v0.$ === 'MatchInProgress') {
 		var details = _v0.a;
-		return $author$project$View$viewMatchInProgress(details);
+		return A2($author$project$View$viewMatchInProgress, model.config.setsToWin, details);
 	} else {
 		var winner = _v0.a;
 		var sets = _v0.b;
-		return A2($author$project$View$viewMatchFinished, winner, sets);
+		return A3($author$project$View$viewMatchFinished, model.config.setsToWin, winner, sets);
 	}
 };
 var $author$project$Main$main = $elm$browser$Browser$sandbox(

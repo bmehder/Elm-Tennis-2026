@@ -14,10 +14,10 @@ view : Model -> Html Msg
 view model =
     case model.match of
         MatchInProgress details ->
-            viewMatchInProgress details
+            viewMatchInProgress model.config.setsToWin details
 
         MatchFinished winner sets ->
-            viewMatchFinished winner sets
+            viewMatchFinished model.config.setsToWin winner sets
 
 
 
@@ -25,24 +25,28 @@ view model =
 
 
 viewMatchInProgress :
-    { completedSets : List Set
-    , currentSet : Set
-    }
+    SetsToWin
+    ->
+        { completedSets : List Set
+        , currentSet : Set
+        }
     -> Html Msg
-viewMatchInProgress details =
+viewMatchInProgress setsToWin details =
     viewMatchLayout
+        setsToWin
         details.completedSets
         details.currentSet
         viewScoringButtons
 
 
-viewMatchFinished : Player -> List Set -> Html Msg
-viewMatchFinished winner sets =
+viewMatchFinished : SetsToWin -> Player -> List Set -> Html Msg
+viewMatchFinished setsToWin winner sets =
     let
         ( completedSets, currentSet ) =
             splitLastSet sets
     in
     viewMatchLayout
+        setsToWin
         completedSets
         currentSet
         (viewFinishedFooter winner)
@@ -53,13 +57,14 @@ viewMatchFinished winner sets =
 
 
 viewMatchLayout :
-    List Set
+    SetsToWin
+    -> List Set
     -> Set
     -> Html Msg
     -> Html Msg
-viewMatchLayout completedSets currentSet footer =
+viewMatchLayout setsToWin completedSets currentSet footer =
     div [ class "grid justify-items-center gap-1-5" ]
-        [ viewScoreboard completedSets currentSet
+        [ viewScoreboard setsToWin completedSets currentSet
         , footer
         ]
 
@@ -101,47 +106,60 @@ splitLastSet sets =
 
 
 viewScoreboard :
-    List Set
+    SetsToWin
+    -> List Set
     -> Set
     -> Html Msg
-viewScoreboard completedSets currentSet =
+viewScoreboard setsToWin completedSets currentSet =
     let
+        maxSets =
+            case setsToWin of
+                BestOfThree ->
+                    3
+
+                BestOfFive ->
+                    5
+
         allSets =
             completedSets ++ [ currentSet ]
 
-        set1 =
-            formatSetScore 0 allSets
-
-        set2 =
-            formatSetScore 1 allSets
-
-        set3 =
-            formatSetScore 2 allSets
+        setColumns =
+            List.range 0 (maxSets - 1)
+                |> List.map (\i -> formatSetScore i allSets)
 
         ( playerOnePoints, playerTwoPoints ) =
             currentGamePoints currentSet
+
+        headings =
+            div [ class "heading" ] [ text "Player" ]
+                :: List.indexedMap
+                    (\i _ -> div [ class "heading" ] [ text ("Set " ++ String.fromInt (i + 1)) ])
+                    setColumns
+                ++ [ div [ class "heading" ] [ text "Points" ] ]
+
+        playerOneRow =
+            viewPlayerLabel "Player 1"
+                :: List.map (\s -> div [] [ s.playerOne ]) setColumns
+                ++ [ div [] [ text playerOnePoints ] ]
+
+        playerTwoRow =
+            viewPlayerLabel "Player 2"
+                :: List.map (\s -> div [] [ s.playerTwo ]) setColumns
+                ++ [ div [] [ text playerTwoPoints ] ]
     in
-    div [ class "scoreboard" ]
-        [ div [ class "heading" ] [ text "Player" ]
-        , div [ class "heading" ] [ text "Set 1" ]
-        , div [ class "heading" ] [ text "Set 2" ]
-        , div [ class "heading" ] [ text "Set 3" ]
-        , div [ class "heading" ] [ text "Points" ]
+    div
+        [ class
+            ("scoreboard "
+                ++ (case setsToWin of
+                        BestOfThree ->
+                            "best-of-3"
 
-        -- Player 1
-        , viewPlayerLabel "Player 1"
-        , div [] [ set1.playerOne ]
-        , div [] [ set2.playerOne ]
-        , div [] [ set3.playerOne ]
-        , div [] [ text playerOnePoints ]
-
-        -- Player 2
-        , viewPlayerLabel "Player 2"
-        , div [] [ set1.playerTwo ]
-        , div [] [ set2.playerTwo ]
-        , div [] [ set3.playerTwo ]
-        , div [] [ text playerTwoPoints ]
+                        BestOfFive ->
+                            "best-of-5"
+                   )
+            )
         ]
+        (headings ++ playerOneRow ++ playerTwoRow)
 
 
 viewPlayerLabel : String -> Html Msg

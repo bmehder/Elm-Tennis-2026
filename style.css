@@ -11,7 +11,6 @@ body {
 
 .scoreboard {
 	display: grid;
-	grid-template-columns: 1.5fr repeat(3, 1fr) 1fr; /* Player column wider */
 	gap: 0.5rem;
 	background: #f9f9f9;
 	color: initial;
@@ -20,20 +19,28 @@ body {
 	border-radius: 0.5rem;
 	padding: 0.5rem;
 	
+	&.best-of-3 {
+		grid-template-columns: 1.5fr repeat(3, 1fr) 1fr;
+	}
+	
+	&.best-of-5 {
+		grid-template-columns: 1.5fr repeat(5, 1fr) 1fr;
+	}
+
 	& > div {
 		padding: 0.5rem;
 		border-bottom: 1px solid #e0e0e0;
 	}
-	
+
 	.heading {
 		font-weight: bold;
 	}
-	
+
 	.player {
 		text-align: left;
 		font-weight: bold;
 	}
-	
+
 	/* Remove bottom border on last row */
 	> div:nth-last-child(-n + 5) {
 		border-bottom: none;
@@ -41,37 +48,40 @@ body {
 }
 
 button {
-  padding: 0.4rem 0.8rem;
-  background-color: #f7f7f7;
-  border: 1px solid #ccc;
-  border-radius: 4px;
-  cursor: pointer;
-  font: inherit; /* keep your app’s font */
-  transition: background-color 0.15s, border-color 0.15s, box-shadow 0.15s;
-	
+	padding: 0.4rem 0.8rem;
+	background-color: #f7f7f7;
+	border: 1px solid #ccc;
+	border-radius: 4px;
+	cursor: pointer;
+	font: inherit; /* keep your app’s font */
+	transition:
+		background-color 0.15s,
+		border-color 0.15s,
+		box-shadow 0.15s;
+
 	&:hover {
 		background-color: #f0f0f0;
 		border-color: #bbb;
 	}
-	
+
 	&:active {
 		background-color: #e8e8e8;
 		border-color: #aaa;
 	}
-	
+
 	&:disabled {
 		opacity: 0.5;
 		cursor: not-allowed;
 	}
 }
 
-/* Parametric Utilities */
+/* Parametric CSS primitive */
 .inner {
 	--inner-max-width: 48rem;
-	--inner-padding-inline: 3rem;
+	--inner-inline-gutter: 3rem;
 	--inner-padding-block: 3rem;
 
-	inline-size: min(calc(100% - var(--inner-padding-inline)), var(--inner-max-width));
+	inline-size: min(100% - var(--inner-inline-gutter), var(--inner-max-width));
 	margin-inline: auto;
 	padding-block: var(--inner-padding-block);
 }

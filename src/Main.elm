@@ -14,6 +14,7 @@ initialModel =
             , currentSet = SetInProgress { playerOneGames = 0, playerTwoGames = 0 } (Ongoing Love Love)
             }
     , config = { setsToWin = BestOfThree }
+    -- , config = { setsToWin = BestOfFive }
     }
 
 
