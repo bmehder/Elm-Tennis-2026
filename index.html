@@ -7,6 +7,14 @@
   <meta name="robots" content="noindex">
   <title>Elm Tennis 2026</title>
   <link rel="stylesheet" href="style.css">
+  <script src="main.js" defer></script>
+  <script defer>
+    document.addEventListener('DOMContentLoaded', () => {
+      Elm.Main.init({
+        node: document.querySelector('#tennis-app')
+      })
+    })
+  </script>
 </head>
 
 <body>
@@ -20,12 +28,6 @@
       </div>
     </div>
   </main>
-  <script src="main.js"></script>
-  <script>
-    const app = Elm.Main.init({
-      node: document.querySelector('#tennis-app')
-    });
-  </script>
 </body>
 
 </html>
