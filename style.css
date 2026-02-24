@@ -23,6 +23,21 @@ h1 {
 	color: #f8fafc;
 }
 
+.github-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-block-start: 1.25rem;
+  color: #ffffff;
+  text-decoration: none;
+  font-size: 0.95rem;
+  opacity: 0.75;
+
+	:hover {
+		text-decoration: underline;
+	}
+}
+
 .scoreboard {
 	display: grid;
 	gap: 0.5rem;
