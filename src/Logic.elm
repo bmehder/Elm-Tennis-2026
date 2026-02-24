@@ -19,6 +19,9 @@ updateIfMatchInProgress fn match =
         MatchFinished _ _ ->
             match
 
+        MatchNotStarted ->
+            match
+
 
 updatePoint : Player -> Match -> Match
 updatePoint pointWinner =

@@ -66,7 +66,8 @@ type Set
 
 
 type Match
-    = MatchInProgress
+    = MatchNotStarted
+    | MatchInProgress
         { completedSets : List Set
         , currentSet : Set
         }
@@ -96,3 +97,4 @@ type alias Model =
 type Msg
     = PlayerWinsPoint Player
     | NewMatch
+    | SetMatchLength SetsToWin

@@ -8,19 +8,20 @@ import View exposing (view)
 
 initialModel : Model
 initialModel =
-    { match =
-        MatchInProgress
-            { completedSets = []
-            , currentSet = SetInProgress { playerOneGames = 0, playerTwoGames = 0 } (Ongoing Love Love)
-            }
+    { match = MatchNotStarted
     , config = { setsToWin = BestOfThree }
-    -- , config = { setsToWin = BestOfFive }
     }
 
 
 newMatch : Match
 newMatch =
-    initialModel.match
+    MatchInProgress
+        { completedSets = []
+        , currentSet =
+            SetInProgress
+                { playerOneGames = 0, playerTwoGames = 0 }
+                (Ongoing Love Love)
+        }
 
 
 main : Program () Model Msg
@@ -47,3 +48,16 @@ update msg model =
 
         NewMatch ->
             { model | match = newMatch }
+
+        SetMatchLength newSetsToWin ->
+            let
+                config =
+                    model.config
+
+                updatedConfig =
+                    { config | setsToWin = newSetsToWin }
+            in
+            { model
+                | config = updatedConfig
+                , match = newMatch
+            }

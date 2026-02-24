@@ -1,6 +1,6 @@
 module View exposing (view)
 
-import Html exposing (Html, button, div, strong, text)
+import Html exposing (Html, button, div, h1, strong, text)
 import Html.Attributes exposing (class)
 import Html.Events exposing (onClick)
 import Types exposing (..)
@@ -13,11 +13,26 @@ import Types exposing (..)
 view : Model -> Html Msg
 view model =
     case model.match of
+        MatchNotStarted ->
+            viewMatchSetup
+
         MatchInProgress details ->
             viewMatchInProgress model.config.setsToWin details
 
         MatchFinished winner sets ->
             viewMatchFinished model.config.setsToWin winner sets
+
+
+viewMatchSetup : Html Msg
+viewMatchSetup =
+    div [ class "grid justify-content-center gap-1-5" ]
+        [ button
+            [ onClick (SetMatchLength BestOfThree) ]
+            [ text "Start Best of 3 Match" ]
+        , button
+            [ onClick (SetMatchLength BestOfFive) ]
+            [ text "Start Best of 5 Match" ]
+        ]
 
 
 
@@ -84,8 +99,14 @@ viewFinishedFooter winner =
     div [ class "grid justify-items-center gap-1" ]
         [ strong []
             [ text ("Winner: " ++ playerToString winner) ]
-        , button [ onClick NewMatch ]
-            [ text "Start New Match" ]
+        , div [ class "grid gap-1" ]
+            [ button
+                [ onClick (SetMatchLength BestOfThree) ]
+                [ text "New Match (Best of 3)" ]
+            , button
+                [ onClick (SetMatchLength BestOfFive) ]
+                [ text "New Match (Best of 5)" ]
+            ]
         ]
 
 
@@ -220,7 +241,7 @@ finishedSetDisplay winner setScore maybeTb =
             String.fromInt setScore.playerTwoGames
 
         ( p1Score, p2Score ) =
-            formatSetScoreWithTiebreak winner baseP1 baseP2 maybeTb
+            formatCompletedSetScore winner baseP1 baseP2 maybeTb
     in
     case winner of
         PlayerOne ->
@@ -234,13 +255,13 @@ finishedSetDisplay winner setScore maybeTb =
             }
 
 
-formatSetScoreWithTiebreak :
+formatCompletedSetScore :
     Player
     -> String
     -> String
     -> Maybe TiebreakScore
     -> ( String, String )
-formatSetScoreWithTiebreak winner p1 p2 maybeTb =
+formatCompletedSetScore winner p1 p2 maybeTb =
     case maybeTb of
         Nothing ->
             ( p1, p2 )
