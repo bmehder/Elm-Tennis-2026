@@ -40,10 +40,10 @@ body {
 		text-align: left;
 		font-weight: bold;
 	}
-
+	
 	/* Remove bottom border on last row */
-	> div:nth-last-child(-n + 5) {
-		border-bottom: none;
+	.player-two-row {
+    border-bottom: none;
 	}
 }
 
@@ -120,6 +120,6 @@ button {
 	gap: 1.5rem;
 }
 
-.strong {
+.bold {
 	font-weight: bold;
 }

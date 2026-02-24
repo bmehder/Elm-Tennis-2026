@@ -5858,7 +5858,7 @@ var $author$project$View$viewPlayerLabel = function (name) {
 		$elm$html$Html$div,
 		_List_fromArray(
 			[
-				$elm$html$Html$Attributes$class('strong')
+				$elm$html$Html$Attributes$class('bold')
 			]),
 		_List_fromArray(
 			[
@@ -5956,14 +5956,26 @@ var $author$project$View$viewScoreboard = F3(
 					])));
 		var playerTwoRow = A2(
 			$elm$core$List$cons,
-			$author$project$View$viewPlayerLabel('Player 2'),
+			A2(
+				$elm$html$Html$div,
+				_List_fromArray(
+					[
+						$elm$html$Html$Attributes$class('bold player-two-row')
+					]),
+				_List_fromArray(
+					[
+						$elm$html$Html$text('Player 2')
+					])),
 			_Utils_ap(
 				A2(
 					$elm$core$List$map,
 					function (s) {
 						return A2(
 							$elm$html$Html$div,
-							_List_Nil,
+							_List_fromArray(
+								[
+									$elm$html$Html$Attributes$class('player-two-row')
+								]),
 							_List_fromArray(
 								[s.playerTwo]));
 					},
@@ -5972,7 +5984,10 @@ var $author$project$View$viewScoreboard = F3(
 					[
 						A2(
 						$elm$html$Html$div,
-						_List_Nil,
+						_List_fromArray(
+							[
+								$elm$html$Html$Attributes$class('player-two-row')
+							]),
 						_List_fromArray(
 							[
 								$elm$html$Html$text(playerTwoPoints)

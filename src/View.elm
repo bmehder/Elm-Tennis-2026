@@ -1,6 +1,6 @@
 module View exposing (view)
 
-import Html exposing (Html, button, div, h1, strong, text)
+import Html exposing (Html, button, div, strong, text)
 import Html.Attributes exposing (class)
 import Html.Events exposing (onClick)
 import Types exposing (..)
@@ -164,9 +164,11 @@ viewScoreboard setsToWin completedSets currentSet =
                 ++ [ div [] [ text playerOnePoints ] ]
 
         playerTwoRow =
-            viewPlayerLabel "Player 2"
-                :: List.map (\s -> div [] [ s.playerTwo ]) setColumns
-                ++ [ div [] [ text playerTwoPoints ] ]
+            div [ class "bold player-two-row" ] [ text "Player 2" ]
+                :: List.map
+                    (\s -> div [ class "player-two-row" ] [ s.playerTwo ])
+                    setColumns
+                ++ [ div [ class "player-two-row" ] [ text playerTwoPoints ] ]
     in
     div
         [ class
@@ -185,7 +187,7 @@ viewScoreboard setsToWin completedSets currentSet =
 
 viewPlayerLabel : String -> Html Msg
 viewPlayerLabel name =
-    div [ class "strong" ] [ text name ]
+    div [ class "bold" ] [ text name ]
 
 
 
